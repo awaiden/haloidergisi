@@ -18,11 +18,9 @@ interface ResetPasswordEmailProps {
   token: string;
 }
 
-export default function ResetPasswordEmail({
-  name = "John Doe",
-  token = "abc123def456ghi789",
-}: ResetPasswordEmailProps) {
-  const resetUrl = `https://haloidergisi.com/reset-password?token=${token}`;
+export default function ResetPasswordEmail({ name, token }: ResetPasswordEmailProps) {
+  const resetUrl = new URL("/reset-password", process.env.APP_URL);
+  resetUrl.searchParams.append("token", token);
 
   return (
     <Html>
@@ -54,7 +52,7 @@ export default function ResetPasswordEmail({
             {/* CTA Button */}
             <Section className='px-12 py-8 text-center'>
               <Button
-                href={resetUrl}
+                href={resetUrl.toString()}
                 className='rounded-lg bg-blue-600 px-8 py-3 text-center text-base font-bold text-white'
               >
                 Şifremi Sıfırla
@@ -66,7 +64,7 @@ export default function ResetPasswordEmail({
               <Text className='m-4 text-sm text-gray-600'>
                 Eğer buton çalışmazsa, aşağıdaki bağlantıyı tarayıcına kopyalayabilirsin:
               </Text>
-              <Text className='m-4 text-sm break-all text-gray-500'>{resetUrl}</Text>
+              <Text className='m-4 text-sm break-all text-gray-500'>{resetUrl.toString()}</Text>
             </Section>
 
             {/* Security Notice */}
@@ -127,3 +125,8 @@ export default function ResetPasswordEmail({
     </Html>
   );
 }
+
+ResetPasswordEmail.PreviewProps = {
+  name: "John Doe",
+  token: "abc123def456ghi789",
+} satisfies ResetPasswordEmailProps;

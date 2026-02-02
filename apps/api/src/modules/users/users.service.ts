@@ -2,8 +2,10 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import argon2 from "argon2";
 
+import { EMAIL_EVENTS } from "@/constants";
 import { PrismaService } from "@/database";
 import { PrismaQueryParams } from "@/decorators";
+import { WelcomeEmailDto } from "@/services/mail.service";
 
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -34,7 +36,13 @@ export class UsersService {
       },
     });
 
-    this.eventEmitter.emit("user.created", user);
+    this.eventEmitter.emit(
+      EMAIL_EVENTS.WELCOME,
+      new WelcomeEmailDto({
+        to: user.email,
+        name: name,
+      }),
+    );
 
     return user;
   }

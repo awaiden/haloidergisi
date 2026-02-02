@@ -1,11 +1,16 @@
-import { Button, Separator } from "@adn-ui/react";
+import { Separator, Button } from "@adn-ui/react";
 import { NotificationSettings } from "@repo/db";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import apiClient from "@/lib/api-client";
 
-export function NotificationsPanel() {
+export const Route = createFileRoute("/_landing/account/notifications")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   return (
     <div className='space-y-6'>
       <div>
@@ -17,6 +22,7 @@ export function NotificationsPanel() {
     </div>
   );
 }
+
 function NotificationSettingsForm() {
   const queryClient = useQueryClient();
   const queryKey = ["notification-settings"];

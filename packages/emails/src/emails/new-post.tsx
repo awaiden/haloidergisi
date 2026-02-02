@@ -16,23 +16,26 @@ import {
 
 interface NewPostEmailProps {
   name: string;
-  postTitle: string;
-  postDescription?: string;
-  coverImageUrl?: string;
-  postUrl: string;
+  title: string;
+  content: string;
+  slug: string;
+  coverImage: string;
 }
 
 export default function NewPostEmail({
-  name = "John Doe",
-  postTitle = "Yeni Sayı",
-  postDescription = "lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-  coverImageUrl = "https://plus.unsplash.com/premium_photo-1765918653566-859c2e4bb4e6?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  postUrl = "#",
+  name,
+  title,
+  content,
+  slug,
+  coverImage,
 }: NewPostEmailProps) {
+  const postUrl = new URL(`/posts/${slug}`, process.env.APP_URL).toString();
+  const coverImageUrl = new URL(coverImage, process.env.VITE_CDN_URL).toString();
+
   return (
     <Html>
       <Head />
-      <Preview>Yeni Sayı Yayınlandı: {postTitle}</Preview>
+      <Preview>Yeni Sayı Yayınlandı: {title}</Preview>
       <Tailwind
         config={{
           presets: [pixelBasedPreset],
@@ -53,7 +56,7 @@ export default function NewPostEmail({
               <Section className='px-12 py-4'>
                 <Img
                   src={coverImageUrl}
-                  alt={postTitle}
+                  alt={title}
                   className='w-full rounded-lg'
                   style={{ maxWidth: "500px", margin: "0 auto", display: "block" }}
                 />
@@ -63,10 +66,8 @@ export default function NewPostEmail({
             {/* Issue Info */}
             <Section className='px-12 py-8'>
               <div className='rounded-lg bg-blue-50 p-6'>
-                <Text className='m-0 mb-3 text-2xl font-bold text-gray-900'>{postTitle}</Text>
-                {postDescription && (
-                  <Text className='m-0 text-base text-gray-700'>{postDescription}</Text>
-                )}
+                <Text className='m-0 mb-3 text-2xl font-bold text-gray-900'>{title}</Text>
+                {content && <Text className='m-0 text-base text-gray-700'>{content}</Text>}
               </div>
             </Section>
 
@@ -149,3 +150,11 @@ export default function NewPostEmail({
     </Html>
   );
 }
+
+NewPostEmail.PreviewProps = {
+  name: "John Doe",
+  title: "Yeni Sayı",
+  content: "lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  coverImage: "#",
+  slug: "yeni-sayi",
+} satisfies NewPostEmailProps;

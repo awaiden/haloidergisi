@@ -17,7 +17,7 @@ interface WelcomeEmailProps {
   name: string;
 }
 
-export default function WelcomeEmail({ name = "John Doe" }: WelcomeEmailProps) {
+export default function WelcomeEmail({ name }: WelcomeEmailProps) {
   return (
     <Html>
       <Head />
@@ -117,3 +117,7 @@ export default function WelcomeEmail({ name = "John Doe" }: WelcomeEmailProps) {
     </Html>
   );
 }
+
+WelcomeEmail.PreviewProps = {
+  name: "John Doe",
+} satisfies WelcomeEmailProps;

@@ -1,12 +1,11 @@
-import { MailerService } from "@nestjs-modules/mailer";
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
-import { render } from "@react-email/render";
-import { VerifyEmail } from "@repo/emails";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { JwtService } from "@nestjs/jwt";
 import argon from "argon2";
-import crypto from "crypto";
 
+import { EMAIL_EVENTS } from "@/constants";
 import { PrismaService } from "@/database";
+import { VerifyEmailDto } from "@/services/mail.service";
 
 import { UsersService } from "../users/users.service";
 import { ChangePasswordDto, UpdateAccountDto, UpdateNotificationsDto } from "./account.dto";
@@ -16,7 +15,8 @@ export class AccountService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
-    private readonly mailerService: MailerService,
+    private readonly jwtService: JwtService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   findOne(userId: string) {
@@ -74,46 +74,55 @@ export class AccountService {
   }
 
   async requestEmailVerification(userId: string) {
-    const alreadyRequested = Array.from(this.emailVerifications.values()).includes(userId);
-    if (alreadyRequested) {
-      throw new BadRequestException(
-        "Email verification already requested. Please check your email.",
-      );
-    }
-
-    const token = crypto.randomBytes(32).toString("hex");
-    this.emailVerifications.set(token, userId);
-
     const user = await this.usersService.findOne(userId);
 
-    await this.mailerService.sendMail({
-      to: user.email,
-      subject: "Email Doğrulama Talebi",
-      html: await render(VerifyEmail({ token, name: user.profile?.name || "Kullanıcı" })),
-    });
+    if (user.emailVerifiedAt) {
+      throw new BadRequestException("Email zaten doğrulanmış.");
+    }
 
-    this.emailVerifications.set(token, userId);
+    const token = this.jwtService.sign(
+      { sub: user.id, email: user.email, type: "email_verification" },
+      { expiresIn: "1h" },
+    );
+
+    this.eventEmitter.emit(
+      EMAIL_EVENTS.VERIFY_EMAIL,
+      new VerifyEmailDto({
+        to: user.email,
+        name: user.profile?.name || "Kullanıcı",
+        token,
+      }),
+    );
 
     return { success: true };
   }
 
   async verifyEmail(userId: string, token: string) {
-    const storedUserId = this.emailVerifications.get(token);
+    try {
+      // Token'ı doğrula
+      const payload = this.jwtService.verify(token);
 
-    if (storedUserId !== userId) {
-      throw new BadRequestException("Invalid or expired email verification token");
+      // Güvenlik kontrolleri
+      if (payload.type !== "email_verification") {
+        throw new BadRequestException("Geçersiz işlem tipi.");
+      }
+
+      if (payload.sub !== userId) {
+        throw new BadRequestException("Bu token başka bir kullanıcıya ait.");
+      }
+
+      // Kullanıcının mevcut e-postası, token oluşturulduğundaki ile aynı mı?
+      const user = await this.usersService.findOne(userId);
+      if (user.email !== payload.email) {
+        throw new BadRequestException("E-posta adresi değişmiş, yeni bir doğrulama isteyin.");
+      }
+
+      await this.usersService.update(userId, { emailVerifiedAt: new Date() });
+
+      return { success: true };
+    } catch {
+      throw new BadRequestException("Geçersiz veya süresi dolmuş doğrulama linki.");
     }
-
-    await this.usersService.update(userId, { emailVerifiedAt: new Date() });
-
-    this.emailVerifications.delete(token);
-
-    return { success: true };
-  }
-
-  @Cron("0 */1 * * *")
-  clearEmailVerificationTokens() {
-    this.emailVerifications.clear();
   }
 
   async removeProvider(userId: string, providerId: string) {

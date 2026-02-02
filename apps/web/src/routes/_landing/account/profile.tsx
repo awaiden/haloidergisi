@@ -1,5 +1,6 @@
-import { Button, Field, Form, Label, Separator } from "@adn-ui/react";
+import { Separator, Field, Button, Form, Label } from "@adn-ui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -10,7 +11,11 @@ import apiClient from "@/lib/api-client";
 import { queryClient } from "@/lib/query-client";
 import { ProfileSchema, profileSchema } from "@/schemas/profile";
 
-export function UpdateProfilePanel() {
+export const Route = createFileRoute("/_landing/account/profile")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const { data: user } = useAuth();
 
   const form = useForm<ProfileSchema>({

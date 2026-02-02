@@ -1,10 +1,11 @@
-import { Button, Field, Form, Separator } from "@adn-ui/react";
+import { Separator, Field, Button, Form } from "@adn-ui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
+import { createFileRoute } from "@tanstack/react-router";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import z from "zod";
 
 import apiClient from "@/lib/api-client";
 
@@ -16,7 +17,11 @@ const changePasswordFormSchema = z.object({
 
 type ChangePasswordFormData = z.infer<typeof changePasswordFormSchema>;
 
-export function ChangePasswordPanel() {
+export const Route = createFileRoute("/_landing/account/security")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 
   const form = useForm<ChangePasswordFormData>({

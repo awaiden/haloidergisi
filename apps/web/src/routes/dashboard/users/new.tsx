@@ -1,6 +1,7 @@
 import { Button, Card, Field, Form } from "@adn-ui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Crew } from "@repo/db";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -33,17 +34,26 @@ function RouteComponent() {
     },
   });
 
-  const onSubmit = async (data: UserSchema) => {
-    try {
+  const queryClient = useQueryClient();
+  const createMutation = useMutation({
+    mutationFn: async (data: UserSchema) => {
       await apiClient.post("/users", data);
-      void navigate({ to: "/dashboard/users" });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["users"] });
       toast.success("Kullanıcı başarıyla oluşturuldu.");
-    } catch (error) {
+      void navigate({ to: "/dashboard/users" });
+    },
+    onError: (error) => {
       const resolved = apiClient.resolveApiError(error);
       toast.error(resolved.message, {
         description: resolved.error,
       });
-    }
+    },
+  });
+
+  const onSubmit = (data: UserSchema) => {
+    createMutation.mutate(data);
   };
 
   return (
@@ -101,9 +111,9 @@ function RouteComponent() {
 
             <Button
               type='submit'
-              disabled={form.formState.isSubmitting}
+              disabled={createMutation.isPending}
             >
-              {form.formState.isSubmitting ? "Oluşturuluyor..." : "Oluştur"}
+              {createMutation.isPending ? "Oluşturuluyor..." : "Oluştur"}
             </Button>
           </Form>
         </section>

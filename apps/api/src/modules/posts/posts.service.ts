@@ -2,8 +2,10 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import slugify from "slugify";
 
+import { EMAIL_EVENTS } from "@/constants";
 import { PrismaService } from "@/database";
 import { PrismaQueryParams } from "@/decorators";
+import { NewPostEmailDto } from "@/services/mail.service";
 
 import { CreatePostDto } from "./dto/create-post.dto";
 import { UpdatePostDto } from "./dto/update-post.dto";
@@ -27,7 +29,15 @@ export class PostsService {
       },
     });
 
-    this.eventEmitter.emit("post.created", post);
+    this.eventEmitter.emit(
+      EMAIL_EVENTS.NEW_POST,
+      new NewPostEmailDto({
+        title: post.title,
+        content: post.content ?? "",
+        slug: post.slug,
+        coverImage: post.coverImage ?? "",
+      }),
+    );
 
     return post;
   }

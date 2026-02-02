@@ -1,15 +1,19 @@
-import type { Provider } from "@repo/db";
-
-import { Button, Separator } from "@adn-ui/react";
+import { Separator, Button } from "@adn-ui/react";
 import { Icon } from "@iconify/react";
+import { Provider } from "@repo/db";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { GoogleAuthButton } from "@/components/auth";
 import apiClient from "@/lib/api-client";
 import { queryClient } from "@/lib/query-client";
 
-export function ProvidersPanel() {
+export const Route = createFileRoute("/_landing/account/applications")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const { data: providers, isLoading } = useQuery({
     queryKey: ["account-providers"],
     queryFn: async () => {

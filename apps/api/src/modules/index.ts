@@ -6,7 +6,6 @@ import { CategoriesModule } from "./categories/categories.module";
 import { CrewsModule } from "./crews/crews.module";
 import { FilesModule } from "./files/files.module";
 import { MessagesModule } from "./messages/messages.module";
-import { NotificationsModule } from "./notifications/notifications.module";
 import { PostsModule } from "./posts/posts.module";
 import { ProfileModule } from "./profile/profile.module";
 import { UsersModule } from "./users/users.module";
@@ -18,7 +17,6 @@ const modules = {
   AuthGoogleModule,
   MessagesModule,
   CategoriesModule,
-  NotificationsModule,
   CrewsModule,
   FilesModule,
   PostsModule,

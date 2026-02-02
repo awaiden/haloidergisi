@@ -1,11 +1,11 @@
-import { Button, Field, Form, Separator } from "@adn-ui/react";
+import { Separator, Field, Button, Form } from "@adn-ui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import z from "zod";
 
 import apiClient from "@/lib/api-client";
 
@@ -15,7 +15,11 @@ const deleteAccountSchema = z.object({
 
 type DeleteAccountData = z.infer<typeof deleteAccountSchema>;
 
-export function DeleteAccountPanel() {
+export const Route = createFileRoute("/_landing/account/delete")({
+  component: RouteComponent,
+});
+
+function RouteComponent() {
   const navigate = useNavigate();
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 

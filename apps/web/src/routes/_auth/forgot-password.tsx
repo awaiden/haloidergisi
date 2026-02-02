@@ -45,7 +45,7 @@ function RouteComponent() {
         ...data,
       });
       toast.success("Şifre sıfırlama talimatları e-posta adresinize gönderildi.");
-      await router.navigate({ to: "/login" });
+      await router.navigate({ to: "/" });
     } catch (error) {
       console.error("Giriş hatası:", error);
       toast.error(apiClient.resolveApiError(error).message);

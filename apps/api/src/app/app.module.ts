@@ -3,11 +3,13 @@ import { MiddlewareConsumer, NestModule } from "@nestjs/common";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { JwtModule } from "@nestjs/jwt";
 import { ScheduleModule } from "@nestjs/schedule";
 
 import { PrismaModule } from "@/database";
 import { LoggerMiddleware } from "@/middlewares/logger.middleware";
 import modules from "@/modules";
+import { MailService } from "@/services/mail.service";
 
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -15,6 +17,10 @@ import { AppService } from "./app.service";
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      global: true,
+    }),
     MailerModule.forRoot({
       transport: {
         host: process.env.SMTP_HOST,
@@ -37,7 +43,7 @@ import { AppService } from "./app.service";
     ...modules,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MailService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

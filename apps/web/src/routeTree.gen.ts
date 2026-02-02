@@ -24,6 +24,7 @@ import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-pass
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
+import { Route as LandingAccountRouteRouteImport } from './routes/_landing/account/route'
 import { Route as DashboardUsersIndexRouteImport } from './routes/dashboard/users/index'
 import { Route as DashboardProfilesIndexRouteImport } from './routes/dashboard/profiles/index'
 import { Route as DashboardPostsIndexRouteImport } from './routes/dashboard/posts/index'
@@ -44,6 +45,11 @@ import { Route as DashboardCrewsCrewIdRouteImport } from './routes/dashboard/cre
 import { Route as DashboardCategoriesNewRouteImport } from './routes/dashboard/categories/new'
 import { Route as DashboardCategoriesCategoryIdRouteImport } from './routes/dashboard/categories/$categoryId'
 import { Route as LandingPostsPostIdRouteImport } from './routes/_landing/posts/$postId'
+import { Route as LandingAccountSecurityRouteImport } from './routes/_landing/account/security'
+import { Route as LandingAccountProfileRouteImport } from './routes/_landing/account/profile'
+import { Route as LandingAccountNotificationsRouteImport } from './routes/_landing/account/notifications'
+import { Route as LandingAccountDeleteRouteImport } from './routes/_landing/account/delete'
+import { Route as LandingAccountApplicationsRouteImport } from './routes/_landing/account/applications'
 
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/dashboard',
@@ -118,6 +124,11 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const LandingAccountRouteRoute = LandingAccountRouteRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => LandingRouteRoute,
+} as any)
 const DashboardUsersIndexRoute = DashboardUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -160,9 +171,9 @@ const LandingPostsIndexRoute = LandingPostsIndexRouteImport.update({
   getParentRoute: () => LandingRouteRoute,
 } as any)
 const LandingAccountIndexRoute = LandingAccountIndexRouteImport.update({
-  id: '/account/',
-  path: '/account/',
-  getParentRoute: () => LandingRouteRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => LandingAccountRouteRoute,
 } as any)
 const DashboardUsersNewRoute = DashboardUsersNewRouteImport.update({
   id: '/users/new',
@@ -222,10 +233,38 @@ const LandingPostsPostIdRoute = LandingPostsPostIdRouteImport.update({
   path: '/posts/$postId',
   getParentRoute: () => LandingRouteRoute,
 } as any)
+const LandingAccountSecurityRoute = LandingAccountSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => LandingAccountRouteRoute,
+} as any)
+const LandingAccountProfileRoute = LandingAccountProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => LandingAccountRouteRoute,
+} as any)
+const LandingAccountNotificationsRoute =
+  LandingAccountNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => LandingAccountRouteRoute,
+  } as any)
+const LandingAccountDeleteRoute = LandingAccountDeleteRouteImport.update({
+  id: '/delete',
+  path: '/delete',
+  getParentRoute: () => LandingAccountRouteRoute,
+} as any)
+const LandingAccountApplicationsRoute =
+  LandingAccountApplicationsRouteImport.update({
+    id: '/applications',
+    path: '/applications',
+    getParentRoute: () => LandingAccountRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LandingIndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/account': typeof LandingAccountRouteRouteWithChildren
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
@@ -237,6 +276,11 @@ export interface FileRoutesByFullPath {
   '/team': typeof LandingTeamRoute
   '/terms': typeof LandingTermsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/account/applications': typeof LandingAccountApplicationsRoute
+  '/account/delete': typeof LandingAccountDeleteRoute
+  '/account/notifications': typeof LandingAccountNotificationsRoute
+  '/account/profile': typeof LandingAccountProfileRoute
+  '/account/security': typeof LandingAccountSecurityRoute
   '/posts/$postId': typeof LandingPostsPostIdRoute
   '/dashboard/categories/$categoryId': typeof DashboardCategoriesCategoryIdRoute
   '/dashboard/categories/new': typeof DashboardCategoriesNewRoute
@@ -271,6 +315,11 @@ export interface FileRoutesByTo {
   '/team': typeof LandingTeamRoute
   '/terms': typeof LandingTermsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/account/applications': typeof LandingAccountApplicationsRoute
+  '/account/delete': typeof LandingAccountDeleteRoute
+  '/account/notifications': typeof LandingAccountNotificationsRoute
+  '/account/profile': typeof LandingAccountProfileRoute
+  '/account/security': typeof LandingAccountSecurityRoute
   '/posts/$postId': typeof LandingPostsPostIdRoute
   '/dashboard/categories/$categoryId': typeof DashboardCategoriesCategoryIdRoute
   '/dashboard/categories/new': typeof DashboardCategoriesNewRoute
@@ -297,6 +346,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_landing': typeof LandingRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/_landing/account': typeof LandingAccountRouteRouteWithChildren
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
@@ -309,6 +359,11 @@ export interface FileRoutesById {
   '/_landing/terms': typeof LandingTermsRoute
   '/_landing/': typeof LandingIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/_landing/account/applications': typeof LandingAccountApplicationsRoute
+  '/_landing/account/delete': typeof LandingAccountDeleteRoute
+  '/_landing/account/notifications': typeof LandingAccountNotificationsRoute
+  '/_landing/account/profile': typeof LandingAccountProfileRoute
+  '/_landing/account/security': typeof LandingAccountSecurityRoute
   '/_landing/posts/$postId': typeof LandingPostsPostIdRoute
   '/dashboard/categories/$categoryId': typeof DashboardCategoriesCategoryIdRoute
   '/dashboard/categories/new': typeof DashboardCategoriesNewRoute
@@ -335,6 +390,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/account'
     | '/forgot-password'
     | '/login'
     | '/register'
@@ -346,6 +402,11 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/dashboard/'
+    | '/account/applications'
+    | '/account/delete'
+    | '/account/notifications'
+    | '/account/profile'
+    | '/account/security'
     | '/posts/$postId'
     | '/dashboard/categories/$categoryId'
     | '/dashboard/categories/new'
@@ -380,6 +441,11 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/dashboard'
+    | '/account/applications'
+    | '/account/delete'
+    | '/account/notifications'
+    | '/account/profile'
+    | '/account/security'
     | '/posts/$postId'
     | '/dashboard/categories/$categoryId'
     | '/dashboard/categories/new'
@@ -405,6 +471,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_landing'
     | '/dashboard'
+    | '/_landing/account'
     | '/_auth/forgot-password'
     | '/_auth/login'
     | '/_auth/register'
@@ -417,6 +484,11 @@ export interface FileRouteTypes {
     | '/_landing/terms'
     | '/_landing/'
     | '/dashboard/'
+    | '/_landing/account/applications'
+    | '/_landing/account/delete'
+    | '/_landing/account/notifications'
+    | '/_landing/account/profile'
+    | '/_landing/account/security'
     | '/_landing/posts/$postId'
     | '/dashboard/categories/$categoryId'
     | '/dashboard/categories/new'
@@ -552,6 +624,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_landing/account': {
+      id: '/_landing/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof LandingAccountRouteRouteImport
+      parentRoute: typeof LandingRouteRoute
+    }
     '/dashboard/users/': {
       id: '/dashboard/users/'
       path: '/users'
@@ -610,10 +689,10 @@ declare module '@tanstack/react-router' {
     }
     '/_landing/account/': {
       id: '/_landing/account/'
-      path: '/account'
+      path: '/'
       fullPath: '/account/'
       preLoaderRoute: typeof LandingAccountIndexRouteImport
-      parentRoute: typeof LandingRouteRoute
+      parentRoute: typeof LandingAccountRouteRoute
     }
     '/dashboard/users/new': {
       id: '/dashboard/users/new'
@@ -692,6 +771,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LandingPostsPostIdRouteImport
       parentRoute: typeof LandingRouteRoute
     }
+    '/_landing/account/security': {
+      id: '/_landing/account/security'
+      path: '/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof LandingAccountSecurityRouteImport
+      parentRoute: typeof LandingAccountRouteRoute
+    }
+    '/_landing/account/profile': {
+      id: '/_landing/account/profile'
+      path: '/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof LandingAccountProfileRouteImport
+      parentRoute: typeof LandingAccountRouteRoute
+    }
+    '/_landing/account/notifications': {
+      id: '/_landing/account/notifications'
+      path: '/notifications'
+      fullPath: '/account/notifications'
+      preLoaderRoute: typeof LandingAccountNotificationsRouteImport
+      parentRoute: typeof LandingAccountRouteRoute
+    }
+    '/_landing/account/delete': {
+      id: '/_landing/account/delete'
+      path: '/delete'
+      fullPath: '/account/delete'
+      preLoaderRoute: typeof LandingAccountDeleteRouteImport
+      parentRoute: typeof LandingAccountRouteRoute
+    }
+    '/_landing/account/applications': {
+      id: '/_landing/account/applications'
+      path: '/applications'
+      fullPath: '/account/applications'
+      preLoaderRoute: typeof LandingAccountApplicationsRouteImport
+      parentRoute: typeof LandingAccountRouteRoute
+    }
   }
 }
 
@@ -715,7 +829,29 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface LandingAccountRouteRouteChildren {
+  LandingAccountApplicationsRoute: typeof LandingAccountApplicationsRoute
+  LandingAccountDeleteRoute: typeof LandingAccountDeleteRoute
+  LandingAccountNotificationsRoute: typeof LandingAccountNotificationsRoute
+  LandingAccountProfileRoute: typeof LandingAccountProfileRoute
+  LandingAccountSecurityRoute: typeof LandingAccountSecurityRoute
+  LandingAccountIndexRoute: typeof LandingAccountIndexRoute
+}
+
+const LandingAccountRouteRouteChildren: LandingAccountRouteRouteChildren = {
+  LandingAccountApplicationsRoute: LandingAccountApplicationsRoute,
+  LandingAccountDeleteRoute: LandingAccountDeleteRoute,
+  LandingAccountNotificationsRoute: LandingAccountNotificationsRoute,
+  LandingAccountProfileRoute: LandingAccountProfileRoute,
+  LandingAccountSecurityRoute: LandingAccountSecurityRoute,
+  LandingAccountIndexRoute: LandingAccountIndexRoute,
+}
+
+const LandingAccountRouteRouteWithChildren =
+  LandingAccountRouteRoute._addFileChildren(LandingAccountRouteRouteChildren)
+
 interface LandingRouteRouteChildren {
+  LandingAccountRouteRoute: typeof LandingAccountRouteRouteWithChildren
   LandingAboutRoute: typeof LandingAboutRoute
   LandingContactRoute: typeof LandingContactRoute
   LandingPrivacyRoute: typeof LandingPrivacyRoute
@@ -723,11 +859,11 @@ interface LandingRouteRouteChildren {
   LandingTermsRoute: typeof LandingTermsRoute
   LandingIndexRoute: typeof LandingIndexRoute
   LandingPostsPostIdRoute: typeof LandingPostsPostIdRoute
-  LandingAccountIndexRoute: typeof LandingAccountIndexRoute
   LandingPostsIndexRoute: typeof LandingPostsIndexRoute
 }
 
 const LandingRouteRouteChildren: LandingRouteRouteChildren = {
+  LandingAccountRouteRoute: LandingAccountRouteRouteWithChildren,
   LandingAboutRoute: LandingAboutRoute,
   LandingContactRoute: LandingContactRoute,
   LandingPrivacyRoute: LandingPrivacyRoute,
@@ -735,7 +871,6 @@ const LandingRouteRouteChildren: LandingRouteRouteChildren = {
   LandingTermsRoute: LandingTermsRoute,
   LandingIndexRoute: LandingIndexRoute,
   LandingPostsPostIdRoute: LandingPostsPostIdRoute,
-  LandingAccountIndexRoute: LandingAccountIndexRoute,
   LandingPostsIndexRoute: LandingPostsIndexRoute,
 }
 

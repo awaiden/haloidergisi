@@ -18,8 +18,9 @@ interface VerifyEmailProps {
   token: string;
 }
 
-export default function VerifyEmail({ name = "John Doe", token = "asd" }: VerifyEmailProps) {
-  const verifyUrl = `https://haloidergisi.com/verify-email?token=${token}`;
+export default function VerifyEmail({ name, token }: VerifyEmailProps) {
+  const verifyUrl = new URL("/verify-email", process.env.APP_URL);
+  verifyUrl.searchParams.append("token", token);
 
   return (
     <Html>
@@ -54,7 +55,7 @@ export default function VerifyEmail({ name = "John Doe", token = "asd" }: Verify
             {/* CTA Button */}
             <Section className='px-12 py-8 text-center'>
               <Button
-                href={verifyUrl}
+                href={verifyUrl.toString()}
                 className='rounded-lg bg-blue-600 px-8 py-3 text-center text-base font-bold text-white'
               >
                 E-postamı Doğrula
@@ -66,7 +67,7 @@ export default function VerifyEmail({ name = "John Doe", token = "asd" }: Verify
               <Text className='m-4 text-sm text-gray-600'>
                 Eğer buton çalışmazsa, aşağıdaki bağlantıyı tarayıcına kopyalayabilirsin:
               </Text>
-              <Text className='m-4 text-sm break-all text-gray-500'>{verifyUrl}</Text>
+              <Text className='m-4 text-sm break-all text-gray-500'>{verifyUrl.toString()}</Text>
             </Section>
 
             {/* Info Box */}
