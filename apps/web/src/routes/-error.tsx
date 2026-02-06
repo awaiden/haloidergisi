@@ -1,6 +1,6 @@
 import { Button } from "@adn-ui/react";
+import { Icon } from "@iconify/react";
 import { Link, useRouter } from "@tanstack/react-router";
-import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export function ErrorComponent({ error }: { error: Error }) {
   const router = useRouter();
@@ -9,7 +9,10 @@ export function ErrorComponent({ error }: { error: Error }) {
     <div className='bg-background flex min-h-screen flex-col items-center justify-center p-4 text-center'>
       <div className='flex max-w-md flex-col items-center gap-6'>
         <div className='bg-destructive/10 flex h-24 w-24 items-center justify-center rounded-full'>
-          <AlertTriangle className='text-destructive h-12 w-12' />
+          <Icon
+            icon='mdi:alert-circle-outline'
+            className='text-destructive h-12 w-12'
+          />
         </div>
 
         <div className='space-y-2'>
@@ -30,7 +33,10 @@ export function ErrorComponent({ error }: { error: Error }) {
             onClick={() => router.invalidate()}
             className='gap-2'
           >
-            <RefreshCw className='h-4 w-4' />
+            <Icon
+              icon='mdi:refresh'
+              className='h-4 w-4'
+            />
             Tekrar Dene
           </Button>
 
