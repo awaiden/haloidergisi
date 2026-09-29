@@ -139,7 +139,26 @@ export function generateCanonicalUrl(path: string, baseUrl?: string): string {
   return `${base}${cleanPath}`;
 }
 
-export function generateStructuredData(type: "WebSite" | "Article" | "Organization", data: any) {
+/** Fields read by {@link generateStructuredData}; each schema type uses a subset. */
+export interface StructuredDataInput {
+  name?: string;
+  url?: string;
+  description?: string;
+  headline?: string;
+  image?: string;
+  datePublished?: string | Date | null;
+  dateModified?: string | Date | null;
+  author?: string;
+  authorType?: "Person" | "Organization";
+  publisherLogo?: string;
+  logo?: string;
+  sameAs?: string[];
+}
+
+export function generateStructuredData(
+  type: "WebSite" | "Article" | "Organization",
+  data: StructuredDataInput,
+) {
   const baseContext = "https://schema.org";
 
   switch (type) {
