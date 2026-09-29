@@ -1,9 +1,10 @@
 import type { Request, Response } from "express";
 
 import { Body, Controller, Get, Post, Query, Req, Res, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 
 import { AllowAnonymous, Auth, Roles } from "@/decorators";
-import { AuthGuard } from "@/guards";
+import { AUTH_THROTTLE, AuthGuard } from "@/guards";
 
 import {
   AuthGoogleService,
@@ -59,6 +60,7 @@ export class AuthGoogleController {
 
   /** Trades the one-time handoff code for a session token. */
   @Post("exchange")
+  @Throttle(AUTH_THROTTLE)
   @AllowAnonymous()
   exchange(@Body("code") code: string, @Body("verifier") verifier?: string) {
     return this.authGoogleService.exchange(code, verifier);

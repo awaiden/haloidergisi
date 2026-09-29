@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, Patch, Post, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 
 import { Auth, Roles, SessionToken } from "@/decorators";
-import { AuthGuard } from "@/guards";
+import { AUTH_THROTTLE, AuthGuard } from "@/guards";
 
 import { ChangePasswordDto, UpdateAccountDto, UpdateNotificationsDto } from "./account.dto";
 import { AccountService } from "./account.service";
@@ -60,11 +61,13 @@ export class AccountController {
   }
 
   @Post("request-email-verification")
+  @Throttle(AUTH_THROTTLE)
   requestEmailVerification(@Auth("id") userId: string) {
     return this.accountService.requestEmailVerification(userId);
   }
 
   @Post("verify-email")
+  @Throttle(AUTH_THROTTLE)
   verifyEmail(@Auth("id") userId: string, @Body("token") token: string) {
     return this.accountService.verifyEmail(userId, token);
   }

@@ -1,7 +1,8 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 
 import { AllowAnonymous } from "@/decorators";
-import { TurnstileGuard } from "@/guards";
+import { AUTH_THROTTLE, TurnstileGuard } from "@/guards";
 
 import { LoginDto, RegisterDto, ResetPasswordDto } from "./auth.dto";
 import { AuthService } from "./auth.service";
@@ -11,6 +12,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post("login")
+  @Throttle(AUTH_THROTTLE)
   @AllowAnonymous()
   @UseGuards(TurnstileGuard)
   login(@Body() loginDto: LoginDto) {
@@ -18,6 +20,7 @@ export class AuthController {
   }
 
   @Post("register")
+  @Throttle(AUTH_THROTTLE)
   @AllowAnonymous()
   @UseGuards(TurnstileGuard)
   register(@Body() registerDto: RegisterDto) {
@@ -31,6 +34,7 @@ export class AuthController {
   }
 
   @Post("forgot-password")
+  @Throttle(AUTH_THROTTLE)
   @AllowAnonymous()
   @UseGuards(TurnstileGuard)
   async forgotPassword(@Body("email") email: string) {
@@ -38,6 +42,7 @@ export class AuthController {
   }
 
   @Post("reset-password")
+  @Throttle(AUTH_THROTTLE)
   @AllowAnonymous()
   @UseGuards(TurnstileGuard)
   async resetPassword(@Body() body: ResetPasswordDto) {

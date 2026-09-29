@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 
 import { AllowAnonymous, DrizzleQuery, Roles } from "@/decorators";
-import { AuthGuard, TurnstileGuard } from "@/guards";
+import { AUTH_THROTTLE, AuthGuard, TurnstileGuard } from "@/guards";
 
 import { CreateMessageDto } from "./dto/create-message.dto";
 import { UpdateMessageDto } from "./dto/update-message.dto";
@@ -14,6 +15,7 @@ export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
+  @Throttle(AUTH_THROTTLE)
   @AllowAnonymous()
   @UseGuards(TurnstileGuard)
   create(@Body() createMessageDto: CreateMessageDto) {
