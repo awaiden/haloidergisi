@@ -667,6 +667,8 @@ class _PageBar extends StatelessWidget {
   final ValueChanged<double> onDrag;
   final ValueChanged<double> onJump;
 
+  static const _height = 48.0;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -680,21 +682,28 @@ class _PageBar extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 4, 16, 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Slider(
-                  value: page.clamp(1, pageCount).toDouble(),
-                  min: 1,
-                  max: pageCount.toDouble(),
-                  divisions: pageCount - 1,
-                  label: '$page',
-                  onChanged: onDrag,
-                  onChangeEnd: onJump,
+          // A Scaffold lets its bottom bar be as tall as the screen, and the
+          // Slider grows to fill whatever height it gets. Unbounded, the bar
+          // took the whole screen and left the pages 0 px tall (only the
+          // slider showed, mid-screen).
+          child: SizedBox(
+            height: _height,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: page.clamp(1, pageCount).toDouble(),
+                    min: 1,
+                    max: pageCount.toDouble(),
+                    divisions: pageCount - 1,
+                    label: '$page',
+                    onChanged: onDrag,
+                    onChangeEnd: onJump,
+                  ),
                 ),
-              ),
-              Text('$page / $pageCount', style: theme.textTheme.labelLarge),
-            ],
+                Text('$page / $pageCount', style: theme.textTheme.labelLarge),
+              ],
+            ),
           ),
         ),
       ),
