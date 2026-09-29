@@ -9,10 +9,11 @@ import 'package:mobile/features/posts/data/issue_file_cache.dart';
 
 /// Serves [body] for every request (or fails with [status]).
 class _FakeAdapter implements HttpClientAdapter {
-  _FakeAdapter(this.body, {this.status = 200});
+  _FakeAdapter(this.body, {this.status = 200, this.contentType});
 
   final List<int> body;
   final int status;
+  final String? contentType;
   int requests = 0;
 
   @override
@@ -20,6 +21,7 @@ class _FakeAdapter implements HttpClientAdapter {
     requests++;
     return ResponseBody.fromBytes(body, status, headers: {
       Headers.contentLengthHeader: ['${body.length}'],
+      if (contentType != null) Headers.contentTypeHeader: [contentType!],
     });
   }
 
@@ -72,5 +74,28 @@ void main() {
 
     expect(await cache.sizeBytes(), 0);
     expect(await cache.cached(url), isNull);
+  });
+
+  test('rejects a 200 response that is not a PDF, naming what came back', () async {
+    final cache = cacheWith(_FakeAdapter(
+      utf8.encode('<!DOCTYPE html><title>Just a moment...</title>'),
+      contentType: 'text/html; charset=UTF-8',
+    ));
+
+    await expectLater(
+      cache.download(url),
+      throwsA(isA<ApiException>().having((e) => e.message, 'message', contains('text/html'))),
+    );
+    expect(await cache.cached(url), isNull);
+    expect(dir.listSync(), isEmpty);
+  });
+
+  test('drops a saved copy that is not a PDF so it can be downloaded again', () async {
+    final cache = cacheWith(_FakeAdapter(utf8.encode('%PDF-1.7 real')));
+    final file = await cache.download(url);
+    await file.writeAsString('<html>error page saved by an older build</html>');
+
+    expect(await cache.cached(url), isNull);
+    expect(await file.exists(), isFalse);
   });
 }

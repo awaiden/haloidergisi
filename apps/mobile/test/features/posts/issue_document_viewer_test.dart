@@ -108,4 +108,35 @@ void main() {
     await tester.tap(find.byType(OutlinedButton));
     expect(redownloads, 1);
   });
+
+  testWidgets('shows why a document failed to open', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+        child: MaterialApp(
+          home: IssueDocumentViewer(
+            documentRef: PdfDocumentRefByLoader(
+              (_) async => throw const PdfException('Failed to load PDF document (FPDF_GetLastError=3)'),
+              key: PdfDocumentRefKey('broken-issue.pdf'),
+            ),
+            post: Post(
+              id: 'p18',
+              slug: 'halo-18',
+              title: 'Halo 18. Dal',
+              attachment: 'issue.pdf',
+              createdAt: DateTime(2026, 9),
+            ),
+            startPage: 1,
+            onRedownload: () {},
+          ),
+        ),
+      ),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(find.textContaining('Dergi dosyası açılamadı'), findsOneWidget);
+    expect(find.textContaining('FPDF_GetLastError=3'), findsOneWidget);
+  });
 }
