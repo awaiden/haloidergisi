@@ -6,9 +6,11 @@ import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { JwtModule } from "@nestjs/jwt";
 import { ScheduleModule } from "@nestjs/schedule";
+import { ThrottlerModule } from "@nestjs/throttler";
 
 import { DrizzleModule } from "@/database";
 import { AuthGuard } from "@/guards/auth.guard";
+import { ClientIpThrottlerGuard } from "@/guards/throttler.guard";
 import { StripSensitiveFieldsInterceptor } from "@/interceptors";
 import { LoggerMiddleware } from "@/middlewares/logger.middleware";
 import modules from "@/modules";
@@ -42,6 +44,8 @@ import { AppService } from "./app.service";
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
+    // Generous global limit per client IP; auth endpoints use AUTH_THROTTLE.
+    ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 600 }]),
     DrizzleModule,
     ...modules,
   ],
@@ -49,6 +53,11 @@ import { AppService } from "./app.service";
   providers: [
     AppService,
     MailService,
+    // Throttling runs first so unauthenticated floods are limited too.
+    {
+      provide: APP_GUARD,
+      useClass: ClientIpThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

@@ -30,7 +30,7 @@ const registerSchema = z.object({
   name: z.string().min(1, { message: "İsim gereklidir." }),
   email: z.string().email({ message: "Geçerli bir e-posta adresi girin." }),
   password: z.string().min(6, { message: "Şifre en az 6 karakter olmalıdır." }),
-  acceptTerms: z.literal(true, { message: "Kullanım Şartları'nı kabul etmelisiniz." }),
+  acceptTerms: z.boolean().refine(Boolean, { message: "Kullanım Şartları'nı kabul etmelisiniz." }),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -48,7 +48,6 @@ function RouteComponent() {
       name: "",
       email: "",
       password: "",
-      // @ts-ignore
       acceptTerms: false,
     },
   });
@@ -100,11 +99,11 @@ function RouteComponent() {
           <CardContent>
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(onSubmit as any)}
+                onSubmit={form.handleSubmit(onSubmit)}
                 className='space-y-4'
               >
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name='name'
                   render={({ field }) => (
                     <FormItem>
@@ -128,7 +127,7 @@ function RouteComponent() {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name='email'
                   render={({ field }) => (
                     <FormItem>
@@ -152,7 +151,7 @@ function RouteComponent() {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name='password'
                   render={({ field }) => (
                     <FormItem>
@@ -176,7 +175,7 @@ function RouteComponent() {
                 />
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name='acceptTerms'
                   render={({ field }) => (
                     <FormItem>

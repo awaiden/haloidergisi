@@ -1,35 +1,22 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Logger,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 
 import { AllowAnonymous, Roles } from "@/decorators";
 import { AuthGuard } from "@/guards";
 
+import { CreateThemesPipe } from "./create-themes.pipe";
+import { CreateThemeDto } from "./dto/create-theme.dto";
 import { UpdateThemeDto } from "./dto/update-theme.dto";
 import { ThemesService } from "./themes.service";
 
 @Controller("themes")
 @UseGuards(AuthGuard)
 export class ThemesController {
-  private readonly logger = new Logger(ThemesController.name);
-
   constructor(private readonly themesService: ThemesService) {}
 
   @Post()
   @Roles("ADMIN")
-  create(@Body() data: any) {
-    this.logger.log(
-      `Received POST request to /themes. Body type: ${Array.isArray(data) ? "Array" : typeof data}`,
-    );
-    return this.themesService.create(data);
+  create(@Body(CreateThemesPipe) themes: CreateThemeDto[]) {
+    return this.themesService.create(themes);
   }
 
   @Get("archive")

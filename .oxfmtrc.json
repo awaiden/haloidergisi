@@ -10,5 +10,12 @@
   "useTabs": false,
   "semi": true,
   "jsxSingleQuote": true,
-  "singleAttributePerLine": true
+  "singleAttributePerLine": true,
+  "ignorePatterns": [
+    "apps/web/src/routeTree.gen.ts",
+    "apps/mobile/ios/**",
+    "apps/mobile/macos/**",
+    "apps/mobile/web/**",
+    "apps/mobile/android/**"
+  ]
 }

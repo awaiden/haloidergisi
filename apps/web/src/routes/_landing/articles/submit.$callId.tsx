@@ -118,7 +118,7 @@ function SubmitArticlePage() {
       );
       void navigate({ to: "/articles/my" });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       const resolved = apiClient.resolveApiError(error);
       toast.error(resolved.message);
     },

@@ -155,11 +155,7 @@ function ThemesDashboard() {
   };
 
   const handleInputChange = (index: number, field: keyof Omit<Theme, "id">, value: string) => {
-    const updated = [...newThemes];
-    if (field in updated[index]) {
-      (updated[index] as any)[field] = value;
-    }
-    setNewThemes(updated);
+    setNewThemes(newThemes.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
   };
 
   const handleBulkSubmit = () => {

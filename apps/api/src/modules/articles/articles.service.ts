@@ -189,7 +189,7 @@ export class ArticlesService {
     const result = await this.drizzle.db
       .update(articles)
       .set({
-        status: dto.status as any,
+        status: dto.status,
         adminNote: dto.adminNote,
         updatedAt: new Date(),
       })

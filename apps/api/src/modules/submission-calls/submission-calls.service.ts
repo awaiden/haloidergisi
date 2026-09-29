@@ -60,9 +60,12 @@ export class SubmissionCallsService {
   }
 
   async update(id: string, dto: UpdateSubmissionCallDto) {
-    const values: any = { ...dto };
-    if (dto.startDate) values.startDate = new Date(dto.startDate);
-    if (dto.endDate) values.endDate = new Date(dto.endDate);
+    const { startDate, endDate, ...rest } = dto;
+    const values: Partial<typeof submissionCalls.$inferInsert> = {
+      ...rest,
+      ...(startDate && { startDate: new Date(startDate) }),
+      ...(endDate && { endDate: new Date(endDate) }),
+    };
 
     const result = await this.drizzle.db
       .update(submissionCalls)

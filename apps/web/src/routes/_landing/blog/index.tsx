@@ -51,11 +51,11 @@ function BlogLandingPage() {
   });
 
   const setSearchQuery = (q: string) => {
-    void navigate({ search: (prev: any) => ({ ...prev, q }) });
+    void navigate({ search: (prev) => ({ ...prev, q }) });
   };
 
   const setViewMode = (view: "grid" | "list") => {
-    void navigate({ search: (prev: any) => ({ ...prev, view }) });
+    void navigate({ search: (prev) => ({ ...prev, view }) });
   };
 
   const filteredNews = useMemo(() => {

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { news } from "@repo/db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 import { DrizzleService } from "../../database/drizzle.service";
 import { slugify } from "../../utils/slugify";
@@ -71,7 +71,7 @@ export class NewsService {
   async update(id: string, dto: UpdateNewsDto) {
     const existing = await this.findOne(id, true);
 
-    const updateData: any = {
+    const updateData: Partial<typeof news.$inferInsert> = {
       ...dto,
       updatedAt: new Date(),
     };
