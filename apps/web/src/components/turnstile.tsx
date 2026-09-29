@@ -1,5 +1,6 @@
 import React from "react";
 
+import { TURNSTILE_SITE_KEY } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 interface TurnstileProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -29,7 +30,7 @@ export function Turnstile({ onVerify, onExpire, className, ...props }: Turnstile
     if (!widgetRef.current) return;
 
     const widgetId = window.turnstile?.render(widgetRef.current, {
-      sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
+      sitekey: TURNSTILE_SITE_KEY,
       appearance: "interaction-only",
       "refresh-expired": "auto",
       language: "tr",

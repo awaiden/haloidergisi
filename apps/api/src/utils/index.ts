@@ -1,9 +1,8 @@
-export * from "./query-builder";
 export * from "./drizzle";
 
 /** Keeps only the allowed keys of a `fields` include (see `parseFields`). */
 export function pickRelations<K extends string>(
-  include: Record<string, true> | undefined,
+  include: Record<string, boolean> | undefined,
   allowed: readonly K[],
 ): Partial<Record<K, true>> {
   return Object.fromEntries(

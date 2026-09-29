@@ -1,9 +1,10 @@
 import axios from "axios";
 
+import { API_URL } from "@/lib/env";
 import useLoaderStore from "@/store/loader-store";
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+  baseURL: API_URL,
 });
 
 function getToken() {

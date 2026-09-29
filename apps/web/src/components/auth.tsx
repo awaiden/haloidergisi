@@ -3,8 +3,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import apiClient from "@/lib/api-client";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_URL } from "@/lib/env";
 
 interface GoogleAuthButtonProps extends React.ComponentProps<typeof Button> {
   action?: "login" | "link";

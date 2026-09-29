@@ -35,8 +35,8 @@ function FieldRoot<
       render={({ field }) => (
         <FormItem className={className}>
           {React.Children.map(children, (child) => {
-            if (React.isValidElement(child)) {
-              return React.cloneElement(child, { ...field } as any);
+            if (React.isValidElement<Record<string, unknown>>(child)) {
+              return React.cloneElement(child, { ...field });
             }
             return child;
           })}
@@ -57,9 +57,7 @@ function FieldLabel({ className, ...props }: FieldLabelProps) {
   );
 }
 
-interface FieldInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  field?: any;
-}
+type FieldInputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 function FieldInput({ className, ...props }: FieldInputProps) {
   return (
@@ -94,9 +92,7 @@ function FieldErrorMessage({ className, ...props }: FieldErrorMessageProps) {
   );
 }
 
-interface FieldTextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  field?: any;
-}
+type FieldTextAreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 function FieldTextArea({ className, ...props }: FieldTextAreaProps) {
   return (
@@ -110,7 +106,6 @@ function FieldTextArea({ className, ...props }: FieldTextAreaProps) {
 }
 
 interface FieldSelectProps extends React.ComponentProps<typeof Select> {
-  field?: any;
   children?: React.ReactNode;
 }
 
