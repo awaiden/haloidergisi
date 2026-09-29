@@ -7,9 +7,7 @@
       "request": "launch",
       "cwd": "apps/mobile",
       "program": "lib/main.dart",
-      "toolArgs": [
-        "--dart-define-from-file=dart_defines.json"
-      ]
+      "toolArgs": ["--dart-define-from-file=dart_defines.json"]
     }
   ]
 }
