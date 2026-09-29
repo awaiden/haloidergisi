@@ -7,20 +7,21 @@ import {
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
 
 import { Roles } from "@/decorators";
 import { AuthGuard } from "@/guards";
 
 import { FilesService } from "./files.service";
+import { RoleBasedUploadInterceptor } from "./upload.interceptor";
 
 @Controller("files")
 @UseGuards(AuthGuard)
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
+  /** Any signed-in user (avatars, submissions); size limit depends on role. */
   @Post()
-  @UseInterceptors(FileInterceptor("file"))
+  @UseInterceptors(RoleBasedUploadInterceptor)
   upload(@UploadedFile() file: Express.Multer.File) {
     return this.filesService.upload(file);
   }

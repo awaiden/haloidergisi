@@ -4,247 +4,113 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**haloidergisi** is a monorepo containing a full-stack web application built with:
-
-- **Runtime**: Bun
-- **Monorepo Tool**: Turborepo
-- **Backend**: NestJS with Drizzle ORM and PostgreSQL
-- **Frontend**: React with TanStack Start
-- **Linting**: oxlint
-- **Formatting**: oxfmt
-- **Pre-commit Hooks**: Husky + lint-staged
-
-## Architecture
-
-### Workspace Structure
+**haloidergisi** is a Bun + Turborepo monorepo for the HALO literary magazine: a NestJS API (Drizzle ORM + PostgreSQL) and a React web app (TanStack Start). Linting is oxlint, formatting is oxfmt, and pre-commit hooks use Husky + lint-staged.
 
 ```
 apps/
-├── api/          # NestJS backend server
-└── web/          # React frontend (TanStack Start)
-
+├── api/          # NestJS REST backend, port 3000 (PORT env)
+├── web/          # React frontend (TanStack Start / Vite), port 5173
+└── mobile/       # Flutter reader/writer app — NOT a Bun workspace (no package.json), not run by turbo
 packages/
-└── emails/       # Shared React Email templates
+└── emails/       # @repo/emails — React Email templates consumed by the API's MailService
 ```
 
-### Backend (`apps/api/`)
+## Commands
 
-**NestJS application** with the following structure:
-
-- `src/modules/` - Feature modules (auth, auth-google, posts, articles, categories, crews, analytics, stats, files, messages, account, profile, news, sitemap, submission-calls, themes, theme-config, tokens, users)
-- `src/app/` - Application configuration (`app.module.ts` wires up all feature modules plus GraphQL, JWT, mailer, and scheduling)
-- `src/database/` - Drizzle client/schema; also exposed via the `@repo/db` path alias (see below)
-- `src/decorators/` - Custom NestJS decorators
-- `src/guards/` - Authentication/authorization and Cloudflare Turnstile guards
-- `src/middlewares/` - HTTP middlewares
-- `src/services/` - Shared business logic services
-- `src/types/` - TypeScript types and interfaces
-- `src/utils/` - Helper functions
-
-**API style**: the API is primarily **REST** (one `*.controller.ts` per module). A **GraphQL** layer (`@nestjs/graphql` + Apollo, code-first) is used for newer modules (e.g. `stats`) — schema is auto-generated to `src/schema.gql` via `autoSchemaFile` in `app.module.ts`; do not hand-edit `schema.gql`. `AuthGuard` is context-aware and applies to both HTTP and GraphQL requests.
-
-**Key Features**:
-
-- Opaque session-token authentication: login issues a random token stored in the `tokens` table (`TokensService`); `AuthGuard` looks up the bearer token on every request rather than verifying a signed JWT. `@nestjs/jwt` is only used for one-off signed tokens (e.g. password-reset links), not for session auth.
-- Google OAuth login via `auth-google` module
-- Route-level auth decorators: `@AllowAnonymous()`, `@OptionalAuth()`, `@Roles(...)`, and the `@Auth()` param decorator to pull the current user (or a field of it) out of the request
-- `@DrizzleQuery()` param decorator parses list-endpoint query params (`page`, `limit`, `sort`, `fields`, `filter`, `search`) into a Drizzle-friendly where/order/pagination shape
-- Cloudflare Turnstile guard for bot protection on public-facing endpoints
-- Drizzle ORM with PostgreSQL
-- AWS S3 for file management
-- Event-driven architecture with `@nestjs/event-emitter` for email notifications
-- Nodemailer for transactional emails
-- RBAC with ADMIN and USER roles
-
-### Frontend (`apps/web/`)
-
-**React application** built with TanStack Start and the following structure:
-
-- `src/routes/` - File-based routing (TanStack Router auto-generates `routeTree.gen.ts`)
-- `src/components/` - Reusable React components (uses Shadcn UI)
-- `src/hooks/` - Custom React hooks
-- `src/lib/` - Utility functions and configurations
-- `src/store/` - Zustand stores for client-side state
-- `src/schemas/` - Zod validation schemas
-- `src/types/` - TypeScript types
-- `src/utils/` - Helper functions
-- `src/contents/` - Static content
-
-**Key Features**:
-
-- TanStack Router for file-based routing
-- TanStack Query for server state management
-- Two API clients: `src/lib/api-client.ts` (axios, used for most REST endpoints — attaches the bearer token from `localStorage` and drives a global loading indicator via the Zustand `loader-store`) and `src/lib/graphql-client.ts` (`graphql-request`, used for GraphQL-backed queries like dashboard stats)
-- Tailwind CSS v4 + Shadcn UI for styling
-- Zustand for client state management
-- React Hook Form + Zod for form validation
-- Recharts for analytics visualizations
-- Framer Motion for animations
-
-### Shared Packages
-
-- **`packages/emails/`** - React Email templates for transactional emails used by the backend
-
-## Development Commands
-
-### Installation & Setup
+The root `package.json` only defines `build`, `dev`, `start`, `check-types`, `lint`, `format` and `db:update`. Any other script (test, debug, db:studio, …) has to be run in its workspace with `bun run --filter=<name> <script>`, or from inside the app directory. `bun run test --filter=api` from the root does **not** work.
 
 ```bash
-bun install                    # Install dependencies
-bun run db:update             # Sync Drizzle schema with database (runs migrations)
+bun install
+bun run dev                        # all apps (turbo; dev depends on ^build, so packages/emails builds first)
+bun run dev --filter=api           # just the API (extra args pass through to `turbo run dev`)
+bun run dev --filter=web
+bun run build                      # dotenvx run -- turbo run build
+bun run start                      # production start (does NOT build first)
+
+bun run lint                       # oxlint (root)
+bun run format                     # oxfmt (root)
+bun run check-types                # turbo run type-check → tsc --noEmit per workspace
+
+bun run db:update                  # api: drizzle-kit generate && drizzle-kit push
+bun run --filter=api db:studio     # Drizzle Studio
+
+# API tests (Jest). There are currently no unit specs, only test/app.e2e-spec.ts
+bun run --filter=api test
+bun run --filter=api test:e2e      # uses test/jest-e2e.json
+cd apps/api && bun x jest path/to/file.spec.ts        # single file
+cd apps/api && bun x jest -t "test name"              # single test by name
+bun run --filter=api debug         # nest start --debug --watch
+
+# Web tests (Vitest)
+bun run --filter=web test          # vitest run
+cd apps/web && bun x vitest run path/to/file.test.tsx
+
+# Email template preview
+bun run --filter=@repo/emails start:dev   # React Email dev server on :3030
 ```
 
-### Development
+## Environment
+
+- There is a single `.env` at the repo root. `link-env.sh` symlinks it into each workspace that has a `package.json` (`apps/*/.env`, `packages/*/.env`). Run it after cloning or after adding a workspace.
+- Root `build`/`start` wrap turbo with `dotenvx run --`. `turbo.json` sets `globalPassThroughEnv: ["*"]`. The API and `drizzle.config.ts` also call `import "dotenv/config"` themselves.
+- `drizzle.config.ts` reads `DATABASE_URL`.
+
+## Architecture
+
+### Shared DB types via the `@repo/db` alias
+
+`@repo/db` is a **tsconfig path alias, not a package**. It points to `apps/api/src/database/db-client.ts`, which re-exports the Drizzle client, every table, the inferred types and the enums (`Role`, `PostStatus`, …) from `src/database/schema/index.ts`.
+- API code imports tables and types from `"@repo/db"` (`apps/api/tsconfig.json`).
+- **The web app has the same alias** (`apps/web/tsconfig.json` → `../api/src/database/db-client`). Frontend entity types (`apps/web/src/types`) come straight from the API's Drizzle schema, so a schema change can break web type-checking. In web code, only use it for types (prefer `import type`); never pull runtime values such as `db` or tables into the browser bundle.
+
+The schema is a single file, `apps/api/src/database/schema/index.ts`. Migrations are written to `apps/api/drizzle/`. Seed and mock-data scripts live in `apps/api/scripts/`.
+
+### Backend (`apps/api/src`)
+
+- `app/app.module.ts` wires up every feature module in `modules/` plus JWT, the mailer, the event emitter and scheduling. Each module is `*.module.ts` + `*.controller.ts` + `*.service.ts` + `dto/` (class-validator) + `entities/`. `main.ts` enables CORS and a global `ValidationPipe`.
+- **Auth uses opaque session tokens, not JWT.** Login stores a random token in the `tokens` table (`TokensService`), and `AuthGuard` looks the bearer token up on every request. It also records the authenticating token on the request (read it with `@SessionToken()`); changing or resetting a password revokes the user's other sessions via `TokensService.removeAllForUser`. `@nestjs/jwt` is only used for one-off signed tokens such as password-reset links. **Google sign-in** (`modules/auth-google`) uses **arctic** as a server-side redirect flow shared by web and mobile: `GET /auth/google?platform=web|mobile` keeps `state` + PKCE verifier in a signed httpOnly cookie and redirects to Google; `GET /auth/google/callback` (must equal `GOOGLE_REDIRECT_URI`, registered in Google Cloud) checks `state`, finds or creates the user, and sends the browser back with a 2-minute one-time handoff code: web `WEB_URL`/`APP_URL` + `/google-callback#code=…`, mobile `halo://auth-callback?code=…`. The client redeems it at `POST /auth/google/exchange`; mobile must also send the verifier behind the `challenge` it passed at start. Linking Google to a signed-in account goes through `POST /auth/google/link`, which returns the URL to open. Signing in with Google whose (Google-verified) email matches an existing account links it automatically; if that account's email was never verified, its password and sessions are revoked first (pre-hijacking protection).
+- **Route decorators** (`src/decorators`): `@AllowAnonymous()`, `@OptionalAuth()`, `@Roles(Role.ADMIN, …)`, and the `@Auth()` param decorator (current user, or one field of it). RBAC roles are ADMIN and USER. `ProfileGuard` handles per-profile ownership checks; a profile's `title` ("unvan") is admin-managed, and `PATCH /profile/:id` refuses a change to it from anyone else (an unchanged value is ignored). There is also a Cloudflare Turnstile guard for public forms. Both clients render Turnstile with `appearance: "interaction-only"`, so it verifies in the background and only shows when Cloudflare needs interaction.
+- **List endpoints** use the `@DrizzleQuery()` param decorator. It parses `page`, `limit`, `sort`, `fields`, `filter` and `search` into a Drizzle where/order/pagination shape, backed by `utils/queryBuilder`.
+- **Email**: services emit events (`EMAIL_EVENTS` in `src/constants.ts`). `services/mail.service.ts` listens for them and renders `@repo/emails` templates through Nodemailer.
+- A global `StripSensitiveFieldsInterceptor` (`src/interceptors/`) removes `password` from every HTTP response, because user rows leak in through many relations (`author`, `user`, …). Don't rely on it to hide other secrets; add the field to its list.
+- Files are stored in AWS S3 (`modules/files`), and `utils/cdn.ts` builds public URLs.
+
+### Frontend (`apps/web/src`)
+
+- TanStack Start with file-based routing in `routes/`. `routeTree.gen.ts` is generated, so don't edit it. Pathless layout groups are directories with a `route.tsx`: `_landing/` (public site), `_auth/` (login/register) and `dashboard/` (admin). Dynamic segments look like `$postId.tsx`.
+- **One API client**: `lib/api-client.ts` (axios) attaches the bearer token from `localStorage` and toggles the global loading indicator through the Zustand `loader-store`. Shared TanStack Query hooks and response types live in `queries/`.
+- UI is Shadcn (`components/ui`) + Tailwind v4 with CSS-variable theming (next-themes). Forms use React Hook Form + Zod (`schemas/`). Charts use Recharts. `.agents/skills/shadcn/` holds project shadcn usage rules (composition, forms, styling, base-vs-radix). Follow them when adding UI.
+- SEO helpers are in `utils/seo.ts`. The sitemap is proxied from the API's `/sitemap` module (see `docs/SEO_IMPROVEMENTS.md`).
+
+### Mobile (`apps/mobile`, Flutter)
+
+Feature-first layout with clean-architecture layers per feature: `lib/app/` (router, theme, env), `lib/core/` (Dio client, token storage, Turnstile, validators) and `lib/features/<name>/{domain,data,presentation}`. State management is Riverpod 3; `@riverpod` controllers use codegen, and core infrastructure uses plain `Provider`s. Routing is `go_router`, and models are `freezed` + `json_serializable`.
+
+- **Auth follows the web's contract.** The opaque token lives in `flutter_secure_storage`, and `AuthInterceptor` adds it as `Bearer`. A 401 on an authenticated request clears the token and fires `sessionExpiredProvider`. `AuthController` then sets the state to `null`, and the router's `redirect` (`authRedirect` in `app/router/app_router.dart`) handles navigation. Mutations never set the controller to loading, because loading means "show the splash".
+- **Turnstile**: `/auth/login`, `/register` and `/forgot-password` need a `cf-turnstile-response` body field. `core/turnstile/turnstile_field.dart` renders Cloudflare's `api.js` in a `webview_flutter` WebView loaded from `TURNSTILE_BASE_URL`, and that hostname must be in the site key's allowed domains. It runs with `appearance: "interaction-only"`: the WebView collapses to 1 px until Cloudflare asks for interaction, and `TurnstileFormMixin` waits up to 10 s for the background token on submit. Tokens are single-use; the mixin resets the widget after a failed submit. The public site key is the default for `TURNSTILE_SITE_KEY`. With no WebView platform (widget tests) the field renders a fallback text instead.
+- **Google sign-in** (mobile): `AuthRepositoryImpl.signInWithGoogle` opens the API flow in a secure browser tab via `flutter_web_auth_2` (`WebAuthenticator`, callback scheme `halo`, `CallbackActivity` in the Android manifest) with its own PKCE challenge, then redeems the handoff code. Adding or changing native plugins, the manifest, or fields on long-lived objects (providers created at startup) needs a full `flutter run`, not hot reload.
+- Auth screens (`AuthScaffold`) always offer a way out: a back arrow when there's a page to pop, otherwise a close button, and the system back button, that go to `/`. They also navigate away on sign-in themselves (to `Routes.afterSignIn`: the `from` path, else home). When login is *pushed*, go_router re-runs `redirect` for the page underneath, so `authRedirect` alone can't leave the login screen.
+- **Design system** (`app/theme/app_theme.dart`): taken from the brand material in `apps/web/public`: pale luminous gold, the logo's thin ring with a dot, and a didone wordmark. Playfair Display sets titles and Inter everything else; both are bundled variable fonts in `assets/fonts/` (weights go through the `wght` axis in `_style`). Brand colors Material lacks live in the `HaloColors` theme extension. Reusable brand widgets are in `core/widgets/halo.dart`: `HaloMark` (logo per theme), `HaloSpinner`/`HaloLoading` (ring with an orbiting dot, still under reduced motion), `HaloGlow` and `HaloRing`. Use them instead of Material's spinner or ad-hoc decoration. Covers are printed objects (`AppTheme.coverRadius`, soft shadow), lists are text-first (`EntryRow`: title, date, a two-line `plainTextExcerpt` and a chevron so rows read as tappable) rather than boxed cards; primary actions on detail pages (e.g. "Yazı Gönder" on a call) sit in a bar pinned to the bottom, and metadata goes on separate lines, not joined with " · ". The theme mode (Sistem/Açık/Koyu, on the Ayarlar page) is `themeModeControllerProvider`, persisted in `SharedPreferences` that `main` loads before the first frame.
+- **Navigation**: `StatefulShellRoute` with four tabs (`app/shell/app_shell.dart`): Dergiler `/` (posts), Haberler `/news`, Çağrılar `/calls` (submission calls) and Hesap `/account`. Content, call pages, the `/account` tab, Ayarlar (`/account/settings`, opened from the gear icon in Hesap: theme, notifications when signed in, and the HALO pages) and the info pages (about, team, contact, privacy, terms) are public, like the web. Hesap itself only holds the account (profile, submissions, password, sign-out). The user's own account pages (`Routes._sessionPaths`) and `/calls/:id/submit` need a session (`Routes._requiresSession`): `authRedirect` sends signed-out users to `Routes.loginFrom(path)` and returns them to that path after login. Only in-app `from` paths are accepted.
+- **Posts**: `GET /posts` returns only published posts to non-admins, and `PostsRemoteDataSource` still sends `status=PUBLISHED`. Stored file paths (covers, PDFs) go through `cdnUrl()` (`core/utils/cdn.dart`), which mirrors the web's `getCdnUrl` and percent-encodes filenames with spaces or Turkish characters. PDFs open **in-app** in `IssueReaderScreen` (`pdfrx`, route `/posts/:slug/read` on the root navigator so it covers the tab bar), using `preferRangeAccess` because issues are ~85 MB. Don't send users to an external browser for PDFs.
+- **Submissions** (`features/submissions`, `Article` in the API): one submission per call. Authors can edit only `PENDING`/`REVISION_REQ` work (`ArticleStatus.canEdit` mirrors `ArticleGuard`). The file is uploaded first (`POST /files`, multipart; the response is the CDN key as plain text) and the key is saved as `fileUrl`. Uploads are streamed from the picked file (not by path, since Android pickers return `content://` URIs). Any signed-in user may upload (avatars, submissions). The size limit depends on role: `RoleBasedUploadInterceptor` (`apps/api/src/modules/files/upload.interceptor.ts`) allows `USER_UPLOAD_LIMIT_BYTES` (25 MB) for regular users and no limit for admins, and oversized uploads get 413. The app checks the same limit up front (`userUploadLimitBytes`); keep the two in sync.
+- **Info pages** (`features/info`): Hakkımızda / Gizlilik / Kullanım Şartları render bundled copies of `apps/web/src/contents/*.md` from `apps/mobile/assets/contents/`. Update both copies when the text changes. Ekibimiz reads the public `GET /crews` (members are id + profile only). İletişim posts to the Turnstile-guarded `POST /messages` via `TurnstileFormMixin`.
+- Config comes in via `--dart-define` (`lib/app/constants/env.dart`): `API_BASE_URL` (defaults to `http://localhost:3000`: on Android, device or emulator, run `adb reverse tcp:3000 tcp:3000`; the iOS simulator shares the host's localhost), `TURNSTILE_SITE_KEY`, `TURNSTILE_BASE_URL` and `CDN_BASE_URL`. Keep them in the git-ignored `apps/mobile/dart_defines.json` (template: `dart_defines.example.json`; the site key is `VITE_TURNSTILE_SITE_KEY` from the root `.env`) and run with `--dart-define-from-file=dart_defines.json`. The VS Code "mobile" launch config already does this. The UI locale is fixed to Turkish, and `main` calls `initializeDateFormatting('tr')` for `formatDate`; widget tests that render dates must call it too. Cleartext http is enabled only in the Android debug manifest.
+- Generated `*.g.dart` / `*.freezed.dart` files are committed. `freezed` is pinned to `4.0.0-dev.3`: stable 3.x conflicts with `riverpod_generator`'s analyzer range, and stable 4.x needs Dart 3.13.
 
 ```bash
-bun run dev                   # Start all apps in development (watch mode)
-bun run dev --filter=api      # Start only API in dev mode
-bun run dev --filter=web      # Start only web app in dev mode
+cd apps/mobile
+flutter pub get
+dart run build_runner watch --delete-conflicting-outputs   # after editing @riverpod / @freezed classes
+flutter analyze && flutter test
+flutter test test/features/auth/login_screen_test.dart     # single file
+cp dart_defines.example.json dart_defines.json            # once; fill in TURNSTILE_SITE_KEY
+adb reverse tcp:3000 tcp:3000                              # Android: reach the local API
+flutter run --dart-define-from-file=dart_defines.json
 ```
 
-### Build
+## Tooling notes
 
-```bash
-bun run build                 # Build all apps and packages
-```
-
-### Testing
-
-```bash
-# Backend (NestJS + Jest)
-bun run test --filter=api                # Run all API tests
-bun run test:watch --filter=api          # Run API tests in watch mode
-bun run test:cov --filter=api            # Run API tests with coverage
-
-# Frontend (Vitest)
-bun run test --filter=web                # Run all web tests
-```
-
-### Code Quality
-
-```bash
-bun run lint                  # Lint all files (oxlint)
-bun run format                # Format all files (oxfmt)
-bun run check-types           # Type check all files (tsc --noEmit)
-```
-
-### Production
-
-```bash
-bun run start                 # Build and start apps in production mode
-```
-
-### Database
-
-```bash
-bun run db:update             # Apply migrations and sync schema (generate + push)
-bun run --filter=api db:studio  # Open Drizzle Studio for database GUI
-```
-
-## Database & Migrations
-
-- **Schema Location**: `apps/api/src/database/schema/index.ts`
-- **Database**: PostgreSQL managed via Drizzle
-- **Config**: `apps/api/drizzle.config.ts` defines schema and migration output
-- **Migrations**: Generated and pushed via `bun run db:update` (runs `drizzle-kit generate && drizzle-kit push`)
-- **Environment Setup**: Uses `dotenvx` to load database credentials from `.env`
-- **Database GUI**: Use `bun run --filter=api db:studio` to open Drizzle Studio
-
-**Important**: The database schema is defined in the API app and accessed via the Drizzle client initialized in `apps/api/src/database/db-client.ts`. That file is also re-exported under the `@repo/db` path alias (`apps/api/tsconfig.json`), so most API code imports tables/types/enums (e.g. `Role`, `PostStatus`) as `from "@repo/db"` rather than a relative path — it is a tsconfig alias, not a real workspace package.
-
-## Code Organization & Patterns
-
-### NestJS Modules
-
-Each backend module follows a standard pattern:
-
-- `module.ts` - Module definition with imports/exports
-- `controller.ts` - REST endpoints and request handling (or `resolver.ts` for GraphQL modules, e.g. `stats`)
-- `service.ts` - Business logic
-- `dto/` - Data Transfer Objects for validation
-- `entities/` - Database entity models
-
-### Frontend Routing
-
-- Uses **TanStack Router** with file-based routing
-- Route files are in `src/routes/` and organized by hierarchy
-- The route tree is auto-generated into `src/routeTree.gen.ts` — **do not edit manually**
-- Layout routes use the `_layout` naming convention (e.g., `_landing.tsx`)
-- Dynamic segments use `$paramName` syntax (e.g., `$postId.tsx`)
-
-### Component Structure
-
-- Shadcn UI components for base UI elements
-- Custom components extend or combine Shadcn components
-- Components should be functional and use React hooks
-- Form components use React Hook Form with Zod validation
-
-### Styling
-
-- Use Tailwind CSS utility classes
-- Maintain consistency with existing Shadcn component styling
-- Color scheme managed via CSS variables (light/dark modes via `next-themes`)
-
-## Important Tools & Configuration
-
-### oxlint & oxfmt
-
-- **Linter**: oxlint (fast Rust-based linter) configured in `.oxlintrc.json`
-- **Formatter**: oxfmt (fast Rust-based formatter) configured in `.oxfmtrc.json`
-- Runs automatically on staged files via Husky pre-commit hooks
-- Use `bun run lint` and `bun run format` to manually lint/format the entire codebase
-
-### Husky Pre-commit Hooks
-
-- Configured in `.husky/pre-commit`
-- Runs `oxfmt --write` and `oxlint --fix` on staged TypeScript files
-- Prevents commits with linting/formatting issues
-
-### Turbo Configuration
-
-- Workspace tasks defined in `turbo.json`
-- Pipeline includes dependency ordering (e.g., `dev` depends on `^db:generate`)
-- Cache disabled for persistent tasks (`dev`, `start`)
-
-### Environment Variables
-
-- Managed with `dotenvx` for secure environment handling
-- Environment files: `.env` and `.env.*.local`
-- Run script: `dotenvx run -- <command>`
-
-## Common Workflows
-
-### Adding a New Feature
-
-1. **Backend**: Create a new module in `apps/api/src/modules/` with controller, service, DTO, and entity files
-2. **Database**: Update schema in `apps/api/src/database/schema/`, then run `bun run db:update`
-3. **Frontend**: Create routes and components in `apps/web/src/routes/` and `apps/web/src/components/`
-4. **Validation**: Use Zod schemas in `apps/web/src/schemas/` for form/request validation
-
-### Running Tests During Development
-
-```bash
-# Watch mode for development
-bun run test:watch --filter=api
-bun run test --filter=web --watch
-```
-
-### Debugging the API
-
-```bash
-bun run debug --filter=api    # Starts with Node debugger enabled
-```
-
-## Key Dependencies
-
-- **Backend**: NestJS, Drizzle, Apollo/GraphQL, Argon2 (password hashing), AWS SDK, Nodemailer, Google Auth Library, React Email
-- **Frontend**: React, TanStack Router/Query, Tailwind v4, Shadcn UI, Zod, React Hook Form, Zustand, Recharts, Framer Motion
-- **Shared**: React Email templates
-
-## Notes for Contributors
-
-- Ensure all TypeScript files pass `bun run check-types` before committing
-- Follow the established module/component structure for consistency
-- Run `bun run format` before committing code (Husky pre-commit hooks will enforce this)
-- Database changes require schema updates in `apps/api/src/database/schema/` followed by `bun run db:update`
-- New routes in the frontend require regeneration of the route tree (automatic with file changes during dev)
+- The pre-commit hook runs `lint-staged`, which runs `oxfmt --write` and then `oxlint --fix` on staged `*.{ts,tsx}` files. Config lives in `.oxfmtrc.json` (sorts imports, package.json and Tailwind classes) and `.oxlintrc.json`.
+- `turbo.json`: `build`, `dev` and `type-check` all depend on `^build`. `dev`/`start` are persistent and uncached, and so are `db:update`/`db:generate`.
+- Node >= 22 and `bun@1.3.5` (`packageManager`).

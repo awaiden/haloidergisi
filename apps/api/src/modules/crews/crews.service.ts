@@ -27,11 +27,13 @@ export class CrewsService {
       limit,
       offset,
       with: {
+        ...include,
+        // Public endpoint: members are exposed as id + profile only. Applied after
+        // `include` so `fields={"users":true}` cannot swap in full user rows.
         users: {
           columns: { id: true },
           with: { profile: true },
         },
-        ...include,
       },
     });
 

@@ -1,6 +1,6 @@
 import { PartialType } from "@nestjs/mapped-types";
 import { User, NotificationSettings } from "@repo/db";
-import { IsBoolean, IsString } from "class-validator";
+import { IsBoolean, IsString, MaxLength, MinLength } from "class-validator";
 
 export class CreateAccountDto implements Partial<User> {
   @IsString()
@@ -19,6 +19,8 @@ export class ChangePasswordDto {
   currentPassword: string;
 
   @IsString()
+  @MinLength(6)
+  @MaxLength(100)
   newPassword: string;
 }
 

@@ -6,6 +6,12 @@ import { DrizzleService } from "../../database/drizzle.service";
 import { slugify } from "../../utils/slugify";
 import { CreateNewsDto, UpdateNewsDto } from "./dto/news.dto";
 
+/** News is public: expose only the author's public profile, never account fields like email. */
+const PUBLIC_AUTHOR = {
+  columns: { id: true },
+  with: { profile: { columns: { id: true, name: true, title: true, avatarUrl: true } } },
+} as const;
+
 @Injectable()
 export class NewsService {
   constructor(private readonly drizzle: DrizzleService) {}
@@ -14,11 +20,7 @@ export class NewsService {
     return await this.drizzle.db.query.news.findMany({
       where: (news, { eq }) => (isAdmin ? undefined : eq(news.isPublished, true)),
       with: {
-        author: {
-          with: {
-            profile: true,
-          },
-        },
+        author: PUBLIC_AUTHOR,
       },
       orderBy: [desc(news.publishedAt), desc(news.createdAt)],
     });
@@ -31,11 +33,7 @@ export class NewsService {
         return isAdmin ? baseFilter : and(baseFilter, eq(news.isPublished, true));
       },
       with: {
-        author: {
-          with: {
-            profile: true,
-          },
-        },
+        author: PUBLIC_AUTHOR,
       },
     });
 

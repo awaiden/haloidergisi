@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { posts } from "@repo/db";
-import { eq, or, sql } from "drizzle-orm";
+import { PostStatus, posts } from "@repo/db";
+import { and, eq, or, sql } from "drizzle-orm";
 import slugify from "slugify";
 
 import { EMAIL_EVENTS } from "@/constants";
 import { DrizzleService } from "@/database";
 import { DrizzleQueryParams } from "@/decorators";
 import { NewPostEmailDto } from "@/services/mail.service";
-import { applyQuery } from "@/utils";
+import { applyQuery, pickRelations } from "@/utils";
 
 import { CreatePostDto } from "./dto/create-post.dto";
 import { UpdatePostDto } from "./dto/update-post.dto";
@@ -48,8 +48,12 @@ export class PostsService {
     return post;
   }
 
-  async findAll(query: DrizzleQueryParams) {
-    const { where, orderBy, limit, offset, with: include } = applyQuery(posts, query);
+  /** `publishedOnly` hides drafts/archived posts from public (non-admin) callers. */
+  async findAll(query: DrizzleQueryParams, publishedOnly = false) {
+    const scoped = publishedOnly
+      ? { ...query, where: { ...query.where, status: PostStatus.PUBLISHED } }
+      : query;
+    const { where, orderBy, limit, offset, with: include } = applyQuery(posts, scoped);
 
     const items = await this.drizzle.db.query.posts.findMany({
       limit,
@@ -57,8 +61,9 @@ export class PostsService {
       where,
       orderBy,
       with: {
+        // Public endpoint: only relations the clients need can be requested.
+        ...pickRelations(include, ["category"]),
         themes: true,
-        ...include,
       },
     });
 
@@ -70,9 +75,10 @@ export class PostsService {
     return { items, meta: { total: Number(total), take: query.take, skip: query.skip } };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, publishedOnly = false) {
+    const byIdOrSlug = or(eq(posts.id, id), eq(posts.slug, id));
     const post = await this.drizzle.db.query.posts.findFirst({
-      where: or(eq(posts.id, id), eq(posts.slug, id)),
+      where: publishedOnly ? and(byIdOrSlug, eq(posts.status, PostStatus.PUBLISHED)) : byIdOrSlug,
       with: {
         themes: true,
         category: true,

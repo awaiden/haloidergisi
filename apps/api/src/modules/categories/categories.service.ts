@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { categories } from "@repo/db";
-import { eq, sql } from "drizzle-orm";
+import { categories, PostStatus, posts } from "@repo/db";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { DrizzleService } from "@/database";
 import { DrizzleQueryParams } from "@/decorators";
@@ -21,8 +21,18 @@ export class CategoriesService {
     return category;
   }
 
-  async findAll(query: DrizzleQueryParams) {
-    const { where, orderBy, limit, offset } = applyQuery(categories, query);
+  async findAll(query: DrizzleQueryParams, onlyWithPublishedPosts = false) {
+    const applied = applyQuery(categories, query);
+    const { orderBy, limit, offset } = applied;
+    let where = applied.where;
+    if (onlyWithPublishedPosts) {
+      const used = await this.drizzle.db
+        .selectDistinct({ id: posts.categoryId })
+        .from(posts)
+        .where(eq(posts.status, PostStatus.PUBLISHED));
+      const ids = used.map((row) => row.id).filter((id): id is string => id !== null);
+      where = and(where, ids.length ? inArray(categories.id, ids) : sql`false`);
+    }
 
     const items = await this.drizzle.db.query.categories.findMany({
       where,

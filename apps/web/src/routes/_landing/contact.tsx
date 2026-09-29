@@ -148,6 +148,7 @@ function RouteComponent() {
 
                   <Turnstile
                     onVerify={(token) => setToken(token)}
+                    onExpire={() => setToken(null)}
                     className='col-span-2'
                   />
 

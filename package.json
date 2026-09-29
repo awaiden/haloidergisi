@@ -17,7 +17,6 @@
     "start": "NODE_ENV=production dotenvx run -- turbo run start"
   },
   "dependencies": {
-    "@as-integrations/express5": "^1.1.2",
     "@dotenvx/dotenvx": "^1.52.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-popover": "^1.1.15",

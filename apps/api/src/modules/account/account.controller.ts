@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Patch, Post, UseGuards } from "@nestjs/common";
 
-import { Auth, Roles } from "@/decorators";
+import { Auth, Roles, SessionToken } from "@/decorators";
 import { AuthGuard } from "@/guards";
 
-import { UpdateAccountDto, UpdateNotificationsDto } from "./account.dto";
+import { ChangePasswordDto, UpdateAccountDto, UpdateNotificationsDto } from "./account.dto";
 import { AccountService } from "./account.service";
 
 @Controller("account")
@@ -38,6 +38,15 @@ export class AccountController {
   @Delete("providers/:providerId")
   removeProvider(@Auth("id") userId: string, @Body("providerId") providerId: string) {
     return this.accountService.removeProvider(userId, providerId);
+  }
+
+  @Patch("password")
+  changePassword(
+    @Auth("id") userId: string,
+    @SessionToken() token: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.accountService.changePassword(userId, changePasswordDto, token);
   }
 
   @Patch()

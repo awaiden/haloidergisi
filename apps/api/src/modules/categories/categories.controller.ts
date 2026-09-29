@@ -21,7 +21,9 @@ export class CategoriesController {
   @Get()
   @AllowAnonymous()
   findAll(@DrizzleQuery(["name"]) query: DrizzleQueryParams) {
-    return this.categoriesService.findAll(query);
+    // `?published=true`: only categories that contain published issues.
+    const { published, ...where } = query.where ?? {};
+    return this.categoriesService.findAll({ ...query, where }, published === "true");
   }
 
   @Get(":id")

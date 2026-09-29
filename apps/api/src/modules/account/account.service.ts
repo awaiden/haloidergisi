@@ -9,6 +9,7 @@ import { EMAIL_EVENTS } from "@/constants";
 import { DrizzleService } from "@/database";
 import { VerifyEmailDto } from "@/services/mail.service";
 
+import { TokensService } from "../tokens/tokens.service";
 import { UsersService } from "../users/users.service";
 import { ChangePasswordDto, UpdateAccountDto, UpdateNotificationsDto } from "./account.dto";
 @Injectable()
@@ -19,6 +20,7 @@ export class AccountService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly tokensService: TokensService,
   ) {}
 
   findOne(userId: string) {
@@ -62,10 +64,11 @@ export class AccountService {
     return this.usersService.remove(userId);
   }
 
-  async changePassword(userId: string, data: ChangePasswordDto) {
+  async changePassword(userId: string, data: ChangePasswordDto, currentToken?: string) {
     const user = await this.usersService.findOne(userId);
 
-    const isCurrentPasswordValid = await argon.verify(user.password!, data.currentPassword);
+    const isCurrentPasswordValid =
+      !!user.password && (await argon.verify(user.password, data.currentPassword));
 
     if (!isCurrentPasswordValid) {
       throw new BadRequestException("Current password is incorrect");
@@ -74,6 +77,9 @@ export class AccountService {
     await this.usersService.update(userId, {
       password: data.newPassword, // will be hashed in UsersService
     });
+
+    // Sign out every other device; the session that made the change stays valid.
+    await this.tokensService.removeAllForUser(userId, currentToken);
 
     return { success: true };
   }

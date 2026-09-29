@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { JwtService } from "@nestjs/jwt";
 import { users } from "@repo/db";
@@ -15,8 +15,6 @@ import { LoginDto, RegisterDto, ResetPasswordDto } from "./auth.dto";
 
 @Injectable()
 export class AuthService {
-  private logger = new Logger(AuthService.name);
-
   constructor(
     private readonly drizzle: DrizzleService,
     private readonly tokensService: TokensService,
@@ -36,20 +34,10 @@ export class AuthService {
       where: eq(users.email, email),
     });
 
-    if (!user) {
+    // Accounts without a password (e.g. legacy imports) must set one via the
+    // forgot-password flow; never accept whatever password is sent first.
+    if (!user?.password || !(await argon2.verify(user.password, password))) {
       throw new BadRequestException("Invalid credentials");
-    }
-
-    if (!user.password) {
-      // First login
-      const hashed = await argon2.hash(password);
-
-      await this.drizzle.db.update(users).set({ password: hashed }).where(eq(users.id, user.id));
-    } else {
-      const isPasswordValid = await argon2.verify(user.password, password);
-      if (!isPasswordValid) {
-        throw new BadRequestException("Invalid credentials");
-      }
     }
 
     const { token } = await this.tokensService.generateToken(user.id);
@@ -67,8 +55,10 @@ export class AuthService {
       with: { profile: true },
     });
 
+    // Same response whether or not the account exists, so this endpoint
+    // can't be used to check which emails are registered.
     if (!user) {
-      throw new BadRequestException("User not found");
+      return { success: true };
     }
 
     const token = this.jwtService.sign(
@@ -76,8 +66,6 @@ export class AuthService {
       { expiresIn: "15m" },
     );
 
-    // In a real application, you would send this token via email
-    this.logger.log(`Password reset token for ${email}: ${token}`);
     this.eventEmitter.emit(
       EMAIL_EVENTS.RESET_PASSWORD,
       new ResetPasswordEmailDto({
@@ -93,20 +81,21 @@ export class AuthService {
   async resetPassword(body: ResetPasswordDto) {
     const { token, newPassword } = body;
 
+    let payload: { sub: string; type: string };
     try {
-      const payload = this.jwtService.verify(token);
-
-      if (payload.type !== "reset_password") {
-        throw new BadRequestException("Geçersiz token tipi");
-      }
-
-      const userId = payload.sub;
-
-      await this.usersService.update(userId, { password: newPassword });
-
-      return { success: true };
+      payload = this.jwtService.verify(token);
     } catch {
       throw new BadRequestException("Geçersiz veya süresi dolmuş token");
     }
+
+    if (payload.type !== "reset_password") {
+      throw new BadRequestException("Geçersiz token tipi");
+    }
+
+    await this.usersService.update(payload.sub, { password: newPassword });
+    // Whoever had the old password may still be signed in somewhere.
+    await this.tokensService.removeAllForUser(payload.sub);
+
+    return { success: true };
   }
 }

@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from "@nestjs/common";
+import { Role } from "@repo/db";
 
-import { AllowAnonymous, DrizzleQuery, type DrizzleQueryParams, Roles } from "@/decorators";
+import { AllowAnonymous, Auth, DrizzleQuery, type DrizzleQueryParams, Roles } from "@/decorators";
 import { AuthGuard } from "@/guards";
 
 import { CreatePostDto } from "./dto/create-post.dto";
@@ -20,13 +21,16 @@ export class PostsController {
   }
 
   @Get()
-  findAll(@DrizzleQuery(["title", "content", "category.name"]) query: DrizzleQueryParams) {
-    return this.postsService.findAll(query);
+  findAll(
+    @DrizzleQuery(["title", "content", "category.name"]) query: DrizzleQueryParams,
+    @Auth("roles") roles?: Role[],
+  ) {
+    return this.postsService.findAll(query, !roles?.includes(Role.ADMIN));
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.postsService.findOne(id);
+  findOne(@Param("id") id: string, @Auth("roles") roles?: Role[]) {
+    return this.postsService.findOne(id, !roles?.includes(Role.ADMIN));
   }
 
   @Roles("ADMIN")

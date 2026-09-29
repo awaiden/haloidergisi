@@ -203,7 +203,10 @@ function RouteComponent() {
                 />
 
                 <div className='flex justify-center'>
-                  <Turnstile onVerify={(token) => setToken(token)} />
+                  <Turnstile
+                    onVerify={(token) => setToken(token)}
+                    onExpire={() => setToken(null)}
+                  />
                 </div>
                 <Button
                   type='submit'

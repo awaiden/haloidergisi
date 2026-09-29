@@ -43,7 +43,9 @@ function RouteComponent() {
 
   const onSubmit = async (data: ProfileSchema) => {
     try {
-      await apiClient.patch(`/profile/${user!.profile!.id}`, data);
+      // The title is admin-managed; don't send it from the user's own form.
+      const { title: _title, ...payload } = data;
+      await apiClient.patch(`/profile/${user!.profile!.id}`, payload);
       toast.success("Profiliniz başarıyla güncellendi.");
       await queryClient.invalidateQueries({ queryKey: ["auth"] });
     } catch (error) {

@@ -3,7 +3,7 @@ import { Cron, CronExpression } from "@nestjs/schedule";
 import { tokens } from "@repo/db";
 import crypto from "crypto";
 import { add } from "date-fns";
-import { eq, lt } from "drizzle-orm";
+import { and, eq, lt, ne } from "drizzle-orm";
 
 import { DrizzleService } from "@/database";
 
@@ -30,6 +30,17 @@ export class TokensService {
       .returning();
 
     return token;
+  }
+
+  /** Revokes every session of a user, optionally keeping the one in use. */
+  async removeAllForUser(userId: string, exceptToken?: string) {
+    await this.drizzle.db
+      .delete(tokens)
+      .where(
+        exceptToken
+          ? and(eq(tokens.userId, userId), ne(tokens.token, exceptToken))
+          : eq(tokens.userId, userId),
+      );
   }
 
   async remove(token: string) {

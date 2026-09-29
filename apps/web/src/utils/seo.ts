@@ -55,8 +55,8 @@ export function generateMetaTags(config: SEOConfig) {
 
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
 
-  const meta: Array<{ name?: string; property?: string; content?: string; charset?: string }> = [
-    { charset: "utf-8" },
+  // The charset tag is set once in __root.tsx (as React's `charSet`).
+  const meta: Array<{ name?: string; property?: string; content?: string }> = [
     { name: "viewport", content: "width=device-width, initial-scale=1" },
   ];
 

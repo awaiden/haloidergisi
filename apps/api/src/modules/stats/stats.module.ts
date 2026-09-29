@@ -2,11 +2,12 @@ import { Module } from "@nestjs/common";
 
 import { DrizzleModule } from "@/database";
 
-import { StatsResolver } from "./stats.resolver";
+import { StatsController } from "./stats.controller";
 import { StatsService } from "./stats.service";
 
 @Module({
   imports: [DrizzleModule],
-  providers: [StatsResolver, StatsService],
+  controllers: [StatsController],
+  providers: [StatsService],
 })
 export class StatsModule {}

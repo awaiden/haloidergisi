@@ -20,6 +20,23 @@ function parseJson(value: string | undefined, paramName: string): Record<string,
   }
 }
 
+/**
+ * `fields` selects relations to join, e.g. `{"category":true}`. Only flat
+ * `relation: true` pairs are allowed: nested objects would let a public list
+ * endpoint reach through relations into other tables (e.g. users' emails).
+ */
+export function parseFields(value: string | undefined): Record<string, true> | undefined {
+  if (!value) return undefined;
+  const parsed = parseJson(value, "fields");
+  const invalid = Array.isArray(parsed) || Object.values(parsed).some((v) => v !== true);
+  if (invalid) {
+    throw new BadRequestException(
+      "Invalid 'fields' query parameter: expected an object of relation names set to true.",
+    );
+  }
+  return parsed as Record<string, true>;
+}
+
 export const DrizzleQuery = createParamDecorator(
   (searchableFields: string[], ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest() as Request;
@@ -55,7 +72,7 @@ export const DrizzleQuery = createParamDecorator(
     // createdAt:desc
     const orderBy = sort ? { [sort.split(":")[0]]: sort.split(":")[1] } : { createdAt: "desc" };
 
-    const include = fields ? parseJson(fields, "fields") : undefined;
+    const include = parseFields(fields);
 
     const parsedFilter = parseJson(filter, "filter");
     const where: Record<string, any> = { ...parsedFilter, ...rest };

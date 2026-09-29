@@ -32,8 +32,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { gqlClient } from "@/lib/graphql-client";
-import { DASHBOARD_STATS_QUERY, DashboardStatsData, StatusCount } from "@/queries/dashboard-stats";
+import apiClient from "@/lib/api-client";
+import { DashboardStatsData, StatusCount } from "@/queries/dashboard-stats";
 import { formatNumber } from "@/utils/chart-helpers";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -160,11 +160,10 @@ function RouteComponent() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-stats", { from, to }],
     queryFn: async () => {
-      const result = await gqlClient.request<{ dashboardStats: DashboardStatsData }>(
-        DASHBOARD_STATS_QUERY,
-        { from, to },
-      );
-      return result.dashboardStats;
+      const { data } = await apiClient.get<DashboardStatsData>("/stats/dashboard", {
+        params: { from, to },
+      });
+      return data;
     },
   });
 

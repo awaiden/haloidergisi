@@ -24,6 +24,7 @@ import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AuthGoogleCallbackRouteImport } from './routes/_auth/google-callback'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
 import { Route as LandingAccountRouteRouteImport } from './routes/_landing/account/route'
 import { Route as DashboardUsersIndexRouteImport } from './routes/dashboard/users/index'
@@ -139,6 +140,11 @@ const AuthRegisterRoute = AuthRegisterRouteImport.update({
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
+  id: '/google-callback',
+  path: '/google-callback',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
@@ -373,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/account': typeof LandingAccountRouteRouteWithChildren
   '/forgot-password': typeof AuthForgotPasswordRoute
+  '/google-callback': typeof AuthGoogleCallbackRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/reset-password': typeof AuthResetPasswordRoute
@@ -429,6 +436,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof LandingIndexRoute
   '/forgot-password': typeof AuthForgotPasswordRoute
+  '/google-callback': typeof AuthGoogleCallbackRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/reset-password': typeof AuthResetPasswordRoute
@@ -489,6 +497,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/_landing/account': typeof LandingAccountRouteRouteWithChildren
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/_auth/google-callback': typeof AuthGoogleCallbackRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/_auth/reset-password': typeof AuthResetPasswordRoute
@@ -550,6 +559,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/account'
     | '/forgot-password'
+    | '/google-callback'
     | '/login'
     | '/register'
     | '/reset-password'
@@ -606,6 +616,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/forgot-password'
+    | '/google-callback'
     | '/login'
     | '/register'
     | '/reset-password'
@@ -665,6 +676,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/_landing/account'
     | '/_auth/forgot-password'
+    | '/_auth/google-callback'
     | '/_auth/login'
     | '/_auth/register'
     | '/_auth/reset-password'
@@ -831,6 +843,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/google-callback': {
+      id: '/_auth/google-callback'
+      path: '/google-callback'
+      fullPath: '/google-callback'
+      preLoaderRoute: typeof AuthGoogleCallbackRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/forgot-password': {
@@ -1139,6 +1158,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteRouteChildren {
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
@@ -1147,6 +1167,7 @@ interface AuthRouteRouteChildren {
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,

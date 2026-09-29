@@ -1,4 +1,3 @@
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 
@@ -23,11 +22,6 @@ const AppProviders = composeProviders(
   ),
   ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
   ({ children }) => <ThemeConfigProvider>{children}</ThemeConfigProvider>,
-  ({ children }) => (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      {children}
-    </GoogleOAuthProvider>
-  ),
 );
 
 export default AppProviders;

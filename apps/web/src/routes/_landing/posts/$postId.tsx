@@ -360,7 +360,10 @@ function FeedbackForm() {
               )}
             />
 
-            <Turnstile onVerify={setTurnstileToken} />
+            <Turnstile
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+            />
 
             <Button
               className={"w-full"}
