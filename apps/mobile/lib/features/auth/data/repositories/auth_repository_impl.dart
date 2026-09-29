@@ -16,8 +16,8 @@ class AuthRepositoryImpl implements AuthRepository {
     this._remote,
     this._tokenStorage, {
     this._webAuthenticator = const FlutterWebAuthenticator(),
-    this._apiBaseUrl = Env.apiBaseUrl,
-  });
+    String? apiBaseUrl,
+  }) : _apiBaseUrl = apiBaseUrl ?? Env.apiBaseUrl;
 
   final AuthRemoteDataSource _remote;
   final TokenStorage _tokenStorage;
