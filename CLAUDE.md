@@ -34,14 +34,14 @@ bun run check-types                # turbo run type-check → tsc --noEmit per w
 bun run db:update                  # api: drizzle-kit generate && drizzle-kit push
 bun run --filter=api db:studio     # Drizzle Studio
 
-# API tests (Jest). There are currently no unit specs, only test/app.e2e-spec.ts
+# API tests (Jest): unit specs sit next to the code (src/**/*.spec.ts)
 bun run --filter=api test
-bun run --filter=api test:e2e      # uses test/jest-e2e.json
+bun run --filter=api test:e2e      # test/app.e2e-spec.ts boots AppModule with configureApp(); no DB needed
 cd apps/api && bun x jest path/to/file.spec.ts        # single file
 cd apps/api && bun x jest -t "test name"              # single test by name
 bun run --filter=api debug         # nest start --debug --watch
 
-# Web tests (Vitest)
+# Web tests (Vitest, src/**/*.test.ts(x), jsdom; config in vitest.config.ts, not vite.config.ts)
 bun run --filter=web test          # vitest run
 cd apps/web && bun x vitest run path/to/file.test.tsx
 
@@ -67,12 +67,12 @@ The schema is a single file, `apps/api/src/database/schema/index.ts`. Migrations
 
 ### Backend (`apps/api/src`)
 
-- `app/app.module.ts` wires up every feature module in `modules/` plus JWT, the mailer, the event emitter and scheduling. Each module is `*.module.ts` + `*.controller.ts` + `*.service.ts` + `dto/` (class-validator) + `entities/`. `main.ts` enables CORS and a global `ValidationPipe`.
+- `app/app.module.ts` wires up every feature module in `modules/` plus JWT, the mailer, the event emitter and scheduling. Each module is `*.module.ts` + `*.controller.ts` + `*.service.ts` + `dto/` (class-validator) + `entities/`. `app/configure-app.ts` (used by `main.ts` and the e2e test) sets up CORS, helmet, `trust proxy` and a global `ValidationPipe`.
 - **Auth uses opaque session tokens, not JWT.** Login stores a random token in the `tokens` table (`TokensService`), and `AuthGuard` looks the bearer token up on every request. It also records the authenticating token on the request (read it with `@SessionToken()`); changing or resetting a password revokes the user's other sessions via `TokensService.removeAllForUser`. `@nestjs/jwt` is only used for one-off signed tokens such as password-reset links. **Google sign-in** (`modules/auth-google`) uses **arctic** as a server-side redirect flow shared by web and mobile: `GET /auth/google?platform=web|mobile` keeps `state` + PKCE verifier in a signed httpOnly cookie and redirects to Google; `GET /auth/google/callback` (must equal `GOOGLE_REDIRECT_URI`, registered in Google Cloud) checks `state`, finds or creates the user, and sends the browser back with a 2-minute one-time handoff code: web `WEB_URL`/`APP_URL` + `/google-callback#code=…`, mobile `halo://auth-callback?code=…`. The client redeems it at `POST /auth/google/exchange`; mobile must also send the verifier behind the `challenge` it passed at start. Linking Google to a signed-in account goes through `POST /auth/google/link`, which returns the URL to open. Signing in with Google whose (Google-verified) email matches an existing account links it automatically; if that account's email was never verified, its password and sessions are revoked first (pre-hijacking protection).
 - **Route decorators** (`src/decorators`): `@AllowAnonymous()`, `@OptionalAuth()`, `@Roles(Role.ADMIN, …)`, and the `@Auth()` param decorator (current user, or one field of it). RBAC roles are ADMIN and USER. `ProfileGuard` handles per-profile ownership checks; a profile's `title` ("unvan") is admin-managed, and `PATCH /profile/:id` refuses a change to it from anyone else (an unchanged value is ignored). There is also a Cloudflare Turnstile guard for public forms. Both clients render Turnstile with `appearance: "interaction-only"`, so it verifies in the background and only shows when Cloudflare needs interaction.
 - **List endpoints** use the `@DrizzleQuery()` param decorator. It parses `page`, `limit`, `sort`, `fields`, `filter` and `search` into a Drizzle where/order/pagination shape, backed by `utils/queryBuilder`.
 - **Email**: services emit events (`EMAIL_EVENTS` in `src/constants.ts`). `services/mail.service.ts` listens for them and renders `@repo/emails` templates through Nodemailer.
-- **HTTP hardening** (`main.ts`): `helmet`, CORS limited to `CORS_ORIGINS` (comma-separated) or else `WEB_URL`/`APP_URL`/`FRONTEND_URL` plus their `www.` variants, with the Vite dev server allowed outside production (`utils/cors.ts`). `TRUST_PROXY` (default 1) is the number of reverse proxies in front of the API. `ClientIpThrottlerGuard` runs before `AuthGuard` and rate-limits per client IP (`CF-Connecting-IP` when present): 600 req/min globally, and `@Throttle(AUTH_THROTTLE)` (10/min) on login, register, password reset, Google exchange, email verification and the contact form. Put `AUTH_THROTTLE` on new public or credential endpoints.
+- **HTTP hardening** (`app/configure-app.ts`): `helmet`, CORS limited to `CORS_ORIGINS` (comma-separated) or else `WEB_URL`/`APP_URL`/`FRONTEND_URL` plus their `www.` variants, with the Vite dev server allowed outside production (`utils/cors.ts`). `TRUST_PROXY` (default 1) is the number of reverse proxies in front of the API. `ClientIpThrottlerGuard` runs before `AuthGuard` and rate-limits per client IP (`CF-Connecting-IP` when present): 600 req/min globally, and `@Throttle(AUTH_THROTTLE)` (10/min) on login, register, password reset, Google exchange, email verification and the contact form. Put `AUTH_THROTTLE` on new public or credential endpoints.
 - A global `StripSensitiveFieldsInterceptor` (`src/interceptors/`) removes `password` from every HTTP response, because user rows leak in through many relations (`author`, `user`, …). Don't rely on it to hide other secrets; add the field to its list.
 - Files are stored in AWS S3 (`modules/files`), and `utils/cdn.ts` builds public URLs.
 
