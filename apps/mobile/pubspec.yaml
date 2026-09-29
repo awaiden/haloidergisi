@@ -94,7 +94,9 @@ flutter:
   # Copies of apps/web/src/contents/*.md; keep them in sync with the web.
   assets:
     - assets/contents/
-    - assets/brand/
+    # Only the logos ship; app_icon*.png are flutter_launcher_icons inputs.
+    - assets/brand/halo-dark.png
+    - assets/brand/halo-light.png
 
   # Variable fonts (OFL, see assets/fonts/OFL-*.txt); weights are applied via
   # the `wght` axis in AppTheme.

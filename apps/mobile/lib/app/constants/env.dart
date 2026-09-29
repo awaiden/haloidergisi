@@ -3,14 +3,12 @@ import 'package:flutter/foundation.dart';
 abstract final class Env {
   static const productionApiUrl = 'https://api.haloidergisi.com';
 
-  /// Local API for debug builds. On Android (device or emulator) run
-  /// `adb reverse tcp:3000 tcp:3000` so the phone's localhost reaches your
-  /// machine; the iOS simulator shares the host's localhost already.
-  static const devApiUrl = 'http://localhost:3000';
-
-  /// `API_BASE_URL` from `--dart-define`, or the default for the build mode.
-  /// Release builds never use a local address (`dart_defines.json` usually
-  /// holds one), so a store build can't ship pointing at a laptop.
+  /// `API_BASE_URL` from `--dart-define`, else the production API, in every
+  /// build mode: a debug APK handed to testers (CI builds one) must work too.
+  /// Local development opts in through `dart_defines.json`
+  /// (`http://localhost:3000`; on Android run `adb reverse tcp:3000 tcp:3000`).
+  /// Release builds ignore a local address even when it is defined, so a
+  /// store build can't ship pointing at a laptop.
   static final apiBaseUrl = resolveApiBaseUrl(
     const String.fromEnvironment('API_BASE_URL'),
     release: kReleaseMode,
@@ -41,7 +39,7 @@ abstract final class Env {
 @visibleForTesting
 String resolveApiBaseUrl(String value, {required bool release}) {
   final url = value.trim().replaceFirst(RegExp(r'/+$'), '');
-  if (url.isEmpty) return release ? Env.productionApiUrl : Env.devApiUrl;
+  if (url.isEmpty) return Env.productionApiUrl;
   if (release && _isLocal(url)) return Env.productionApiUrl;
   return url;
 }

@@ -14,8 +14,9 @@ void main() {
       );
     });
 
-    test('defaults per build mode when the define is missing', () {
-      expect(resolveApiBaseUrl('', release: false), Env.devApiUrl);
+    test('defaults to the production API in every build mode', () {
+      // A debug APK built without defines (like the CI artifact) must work.
+      expect(resolveApiBaseUrl('', release: false), Env.productionApiUrl);
       expect(resolveApiBaseUrl('', release: true), Env.productionApiUrl);
     });
 
