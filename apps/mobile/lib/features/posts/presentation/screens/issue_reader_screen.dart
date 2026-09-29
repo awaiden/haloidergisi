@@ -286,10 +286,16 @@ class IssueDocumentViewer extends StatelessWidget {
   final int startPage;
   final VoidCallback onRedownload;
 
-  /// pdfium's errors mean nothing to readers; retrying downloads a fresh copy.
-  static const _brokenFile = ApiException(
-    'Dergi dosyası açılamadı. Yeniden indirmek için tekrar deneyin.',
-  );
+  /// Retrying downloads a fresh copy. pdfium's reason is appended so a
+  /// reader's screenshot says what actually went wrong.
+  static ApiException _brokenFile(Object? error) {
+    if (error != null) debugPrint('Issue PDF failed to open: $error');
+    final detail = error?.toString().trim() ?? '';
+    return ApiException(
+      'Dergi dosyası açılamadı. Yeniden indirmek için tekrar deneyin.'
+      '${detail.isEmpty ? '' : '\n\n(${detail.length > 160 ? '${detail.substring(0, 160)}…' : detail})'}',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -301,7 +307,7 @@ class IssueDocumentViewer extends StatelessWidget {
       ),
       errorBuilder: (context, error, _) => _ReaderScaffold(
         title: post.title,
-        body: ErrorRetry(error: _brokenFile, onRetry: onRedownload),
+        body: ErrorRetry(error: _brokenFile(error), onRetry: onRedownload),
       ),
       builder: (context, document) => switch (document) {
         null => _ReaderScaffold(
@@ -311,7 +317,7 @@ class IssueDocumentViewer extends StatelessWidget {
         // An empty document means a broken download: offer to fetch it again.
         PdfDocument(pages: []) => _ReaderScaffold(
           title: post.title,
-          body: ErrorRetry(error: _brokenFile, onRetry: onRedownload),
+          body: ErrorRetry(error: _brokenFile(null), onRetry: onRedownload),
         ),
         _ => _IssuePages(
           key: ValueKey(document),
@@ -661,6 +667,8 @@ class _PageBar extends StatelessWidget {
   final ValueChanged<double> onDrag;
   final ValueChanged<double> onJump;
 
+  static const _height = 48.0;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -674,21 +682,28 @@ class _PageBar extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 4, 16, 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Slider(
-                  value: page.clamp(1, pageCount).toDouble(),
-                  min: 1,
-                  max: pageCount.toDouble(),
-                  divisions: pageCount - 1,
-                  label: '$page',
-                  onChanged: onDrag,
-                  onChangeEnd: onJump,
+          // A Scaffold lets its bottom bar be as tall as the screen, and the
+          // Slider grows to fill whatever height it gets. Unbounded, the bar
+          // took the whole screen and left the pages 0 px tall (only the
+          // slider showed, mid-screen).
+          child: SizedBox(
+            height: _height,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: page.clamp(1, pageCount).toDouble(),
+                    min: 1,
+                    max: pageCount.toDouble(),
+                    divisions: pageCount - 1,
+                    label: '$page',
+                    onChanged: onDrag,
+                    onChangeEnd: onJump,
+                  ),
                 ),
-              ),
-              Text('$page / $pageCount', style: theme.textTheme.labelLarge),
-            ],
+                Text('$page / $pageCount', style: theme.textTheme.labelLarge),
+              ],
+            ),
           ),
         ),
       ),

@@ -19,6 +19,8 @@ class _Document extends Mock implements PdfDocument {
 
 class _Page extends Mock implements PdfPage {}
 
+class _CancelToken extends Mock implements PdfPageRenderCancellationToken {}
+
 /// An in-memory document with [count] A4 pages that render nothing.
 _Document _fakeDocument(int count) {
   final document = _Document();
@@ -30,6 +32,16 @@ _Document _fakeDocument(int count) {
     when(() => page.height).thenReturn(842);
     when(() => page.rotation).thenReturn(PdfPageRotation.none);
     when(() => page.isLoaded).thenReturn(true);
+    // Rendering yields no image (there's no pdfium in tests); the layout is what's under test.
+    when(() => page.createCancellationToken()).thenReturn(_CancelToken());
+    when(
+      () => page.render(
+        fullWidth: any(named: 'fullWidth'),
+        fullHeight: any(named: 'fullHeight'),
+        rotationOverride: any(named: 'rotationOverride'),
+        cancellationToken: any(named: 'cancellationToken'),
+      ),
+    ).thenAnswer((_) async => null);
     return page;
   });
   when(() => document.sourceName).thenReturn('fake-issue.pdf');
@@ -87,6 +99,11 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('1 / 3'), findsOneWidget);
     expect(find.byType(PdfPageView), findsOneWidget);
+    // The page bar once grew to the whole screen (Slider fills its height),
+    // leaving the pages 0 px tall: pdfium never rendered and only the slider
+    // showed. The pages must get the screen, the bar a single row.
+    expect(tester.getSize(find.byType(PageView)).height, greaterThan(400));
+    expect(tester.getSize(find.byType(Slider)).height, lessThanOrEqualTo(48));
   });
 
   testWidgets('reopens on the saved page', (tester) async {
@@ -107,5 +124,36 @@ void main() {
     expect(find.textContaining('Dergi dosyası açılamadı'), findsOneWidget);
     await tester.tap(find.byType(OutlinedButton));
     expect(redownloads, 1);
+  });
+
+  testWidgets('shows why a document failed to open', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+        child: MaterialApp(
+          home: IssueDocumentViewer(
+            documentRef: PdfDocumentRefByLoader(
+              (_) async => throw const PdfException('Failed to load PDF document (FPDF_GetLastError=3)'),
+              key: PdfDocumentRefKey('broken-issue.pdf'),
+            ),
+            post: Post(
+              id: 'p18',
+              slug: 'halo-18',
+              title: 'Halo 18. Dal',
+              attachment: 'issue.pdf',
+              createdAt: DateTime(2026, 9),
+            ),
+            startPage: 1,
+            onRedownload: () {},
+          ),
+        ),
+      ),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(find.textContaining('Dergi dosyası açılamadı'), findsOneWidget);
+    expect(find.textContaining('FPDF_GetLastError=3'), findsOneWidget);
   });
 }

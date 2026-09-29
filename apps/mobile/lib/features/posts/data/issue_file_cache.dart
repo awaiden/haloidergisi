@@ -39,10 +39,12 @@ class IssueFileCache {
   }
 
   /// The saved copy of [url], or `null` if it hasn't been downloaded.
+  /// A saved file that isn't a PDF (e.g. an HTML page an older build stored)
+  /// is dropped, so the reader offers a fresh download instead of failing.
   Future<File?> cached(String url) async {
     final file = await _fileFor(url);
     if (!await file.exists()) return null;
-    if (await file.length() == 0) {
+    if (!await _looksLikePdf(file)) {
       await file.delete();
       return null;
     }
@@ -62,20 +64,40 @@ class IssueFileCache {
     final partial = File('${file.path}.part');
     try {
       if (await partial.exists()) await partial.delete();
-      await _dio.download(
+      final response = await _dio.download(
         url,
         partial.path,
         cancelToken: cancelToken,
         onReceiveProgress: (received, total) =>
             onProgress?.call(received, total > 0 ? total : null),
       );
+      // A CDN or proxy can answer 200 with an HTML page (challenge, login,
+      // error). Saving that as the issue would make it unopenable forever.
+      if (!await _looksLikePdf(partial)) {
+        final type = response.headers.value(Headers.contentTypeHeader);
+        throw ApiException(
+          'Sunucu PDF yerine başka bir içerik gönderdi'
+          '${type == null ? '' : ' ($type)'}. Lütfen daha sonra tekrar deneyin.',
+        );
+      }
       if (await file.exists()) await file.delete();
       return await partial.rename(file.path);
     } catch (e) {
       if (await partial.exists()) await partial.delete();
       if (e is DioException && CancelToken.isCancel(e)) rethrow;
+      if (e is ApiException) rethrow;
       throw ApiException.from(e);
     }
+  }
+
+  /// PDFs start with `%PDF` (the spec allows up to 1 KB of junk before it).
+  static Future<bool> _looksLikePdf(File file) async {
+    if (!await file.exists() || await file.length() == 0) return false;
+    final head = <int>[];
+    await for (final chunk in file.openRead(0, 1024)) {
+      head.addAll(chunk);
+    }
+    return latin1.decode(head, allowInvalid: true).contains('%PDF');
   }
 
   /// Total size of downloaded issues, in bytes.
