@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../../../../app/theme/app_theme.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/cdn.dart';
 import '../../../../core/widgets/error_retry.dart';
 import '../../../../core/widgets/halo.dart';
@@ -254,8 +255,8 @@ class _ReaderState extends ConsumerState<_Reader> {
         ),
       _ReaderStatus.ready => file == null
           ? const Scaffold(body: Center(child: HaloLoading()))
-          : _DocumentViewer(
-              file: file,
+          : IssueDocumentViewer(
+              documentRef: PdfDocumentRefFile(file.path),
               post: widget.post,
               startPage: _startPage,
               onRedownload: () => _redownload(file),
@@ -264,53 +265,117 @@ class _ReaderState extends ConsumerState<_Reader> {
   }
 }
 
-class _DocumentViewer extends ConsumerStatefulWidget {
-  const _DocumentViewer({
-    required this.file,
+/// Opens an issue's PDF and pages through it. Takes a [PdfDocumentRef] (the
+/// downloaded file in the app) so tests can supply an in-memory document.
+///
+/// [PdfDocumentViewBuilder] only loads the document; all reader state lives in
+/// [_IssuePages] below it, so nothing calls `setState` on an ancestor while
+/// the builder is building (that threw as soon as a document loaded).
+@visibleForTesting
+class IssueDocumentViewer extends StatelessWidget {
+  const IssueDocumentViewer({
+    super.key,
+    required this.documentRef,
     required this.post,
     required this.startPage,
     required this.onRedownload,
   });
 
-  final File file;
+  final PdfDocumentRef documentRef;
   final Post post;
   final int startPage;
   final VoidCallback onRedownload;
 
+  /// pdfium's errors mean nothing to readers; retrying downloads a fresh copy.
+  static const _brokenFile = ApiException(
+    'Dergi dosyası açılamadı. Yeniden indirmek için tekrar deneyin.',
+  );
+
   @override
-  ConsumerState<_DocumentViewer> createState() => _DocumentViewerState();
+  Widget build(BuildContext context) {
+    return PdfDocumentViewBuilder(
+      documentRef: documentRef,
+      loadingBuilder: (context) => _ReaderScaffold(
+        title: post.title,
+        body: const Center(child: HaloLoading()),
+      ),
+      errorBuilder: (context, error, _) => _ReaderScaffold(
+        title: post.title,
+        body: ErrorRetry(error: _brokenFile, onRetry: onRedownload),
+      ),
+      builder: (context, document) => switch (document) {
+        null => _ReaderScaffold(
+          title: post.title,
+          body: const Center(child: HaloLoading()),
+        ),
+        // An empty document means a broken download: offer to fetch it again.
+        PdfDocument(pages: []) => _ReaderScaffold(
+          title: post.title,
+          body: ErrorRetry(error: _brokenFile, onRetry: onRedownload),
+        ),
+        _ => _IssuePages(
+          key: ValueKey(document),
+          document: document,
+          post: post,
+          startPage: startPage,
+        ),
+      },
+    );
+  }
 }
 
-class _DocumentViewerState extends ConsumerState<_DocumentViewer> {
-  late final PageController _pageController;
-  int _currentPage = 1;
-  int? _pageCount;
+class _ReaderScaffold extends StatelessWidget {
+  const _ReaderScaffold({
+    required this.title,
+    required this.body,
+    this.bottomNavigationBar,
+  });
+
+  final String title;
+  final Widget body;
+  final Widget? bottomNavigationBar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      appBar: AppBar(
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+      body: body,
+      bottomNavigationBar: bottomNavigationBar,
+    );
+  }
+}
+
+class _IssuePages extends ConsumerStatefulWidget {
+  const _IssuePages({
+    super.key,
+    required this.document,
+    required this.post,
+    required this.startPage,
+  });
+
+  final PdfDocument document;
+  final Post post;
+  final int startPage;
+
+  @override
+  ConsumerState<_IssuePages> createState() => _IssuePagesState();
+}
+
+class _IssuePagesState extends ConsumerState<_IssuePages> {
+  late final int _pageCount = widget.document.pages.length;
+  late int _currentPage = widget.startPage.clamp(1, _pageCount);
+  late final PageController _pageController = PageController(
+    initialPage: _currentPage - 1,
+  );
   double? _dragPage;
-  bool _notifiedResume = false;
 
   @override
   void initState() {
     super.initState();
-    _currentPage = widget.startPage;
-    _pageController = PageController(initialPage: widget.startPage - 1);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _onDocumentLoaded(PdfDocument document) {
-    final count = document.pages.length;
-    if (_pageCount != count) {
-      setState(() {
-        _pageCount = count;
-        if (_currentPage > count) _currentPage = count;
-      });
-    }
-    if (!_notifiedResume && widget.startPage > 1 && widget.startPage <= count) {
-      _notifiedResume = true;
+    if (widget.startPage > 1 && widget.startPage <= _pageCount) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -325,83 +390,63 @@ class _DocumentViewerState extends ConsumerState<_DocumentViewer> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _saveProgress(int page) =>
+      ref.read(readingProgressProvider).save(widget.post.slug, page);
+
+  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final pageCount = _pageCount;
-
-    return Scaffold(
-      backgroundColor: scheme.surfaceContainerHighest,
-      appBar: AppBar(
-        title: Text(
-          widget.post.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-      body: PdfDocumentViewBuilder.file(
-        widget.file.path,
-        key: ValueKey(widget.file.path),
-        loadingBuilder: (context) => const Center(child: HaloLoading()),
-        errorBuilder: (context, error, _) => ErrorRetry(
-          error: error,
-          onRetry: widget.onRedownload,
-        ),
-        builder: (context, document) {
-          if (document == null) {
-            return const Center(child: HaloLoading());
-          }
-
-          _onDocumentLoaded(document);
-          final count = document.pages.length;
-
-          return PageView.builder(
-            controller: _pageController,
-            itemCount: count,
-            onPageChanged: (index) {
-              final newPage = index + 1;
-              setState(() => _currentPage = newPage);
-              ref.read(readingProgressProvider).save(widget.post.slug, newPage);
-            },
-            itemBuilder: (context, index) {
-              return InteractiveViewer(
-                minScale: 1.0,
-                maxScale: 4.0,
-                clipBehavior: Clip.none,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 12,
-                    ),
-                    child: PdfPageView(
-                      document: document,
-                      pageNumber: index + 1,
-                      maximumDpi: 300,
-                      backgroundColor: Colors.white,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.18),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+    return _ReaderScaffold(
+      title: widget.post.title,
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: _pageCount,
+        onPageChanged: (index) {
+          final newPage = index + 1;
+          setState(() => _currentPage = newPage);
+          _saveProgress(newPage);
+        },
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            minScale: 1.0,
+            maxScale: 4.0,
+            clipBehavior: Clip.none,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
+                child: PdfPageView(
+                  document: widget.document,
+                  pageNumber: index + 1,
+                  maximumDpi: 300,
+                  backgroundColor: Colors.white,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           );
         },
       ),
-      bottomNavigationBar: pageCount != null && pageCount > 1
+      bottomNavigationBar: _pageCount > 1
           ? _PageBar(
               page: (_dragPage ?? _currentPage.toDouble()).round(),
-              pageCount: pageCount,
+              pageCount: _pageCount,
               onDrag: (val) => setState(() => _dragPage = val),
               onJump: (val) {
                 final target = val.round();
@@ -410,7 +455,7 @@ class _DocumentViewerState extends ConsumerState<_DocumentViewer> {
                   _currentPage = target;
                 });
                 _pageController.jumpToPage(target - 1);
-                ref.read(readingProgressProvider).save(widget.post.slug, target);
+                _saveProgress(target);
               },
             )
           : null,
