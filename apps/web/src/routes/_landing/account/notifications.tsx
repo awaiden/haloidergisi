@@ -41,7 +41,9 @@ function NotificationSettingsForm() {
       await queryClient.cancelQueries({ queryKey });
       const previousSettings = queryClient.getQueryData<NotificationSettings>(queryKey);
 
-      queryClient.setQueryData(queryKey, (old: any) => ({ ...old, ...newSetting }));
+      queryClient.setQueryData<NotificationSettings>(queryKey, (old) =>
+        old ? { ...old, ...newSetting } : old,
+      );
 
       return { previousSettings };
     },

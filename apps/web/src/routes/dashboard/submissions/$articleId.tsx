@@ -75,7 +75,7 @@ function SubmissionDetailPage() {
   useEffect(() => {
     if (article) {
       statusForm.reset({
-        status: article.status as any,
+        status: article.status,
         adminNote: article.adminNote || "",
       });
       contentForm.reset({

@@ -1,6 +1,7 @@
 import { Icon } from "@iconify/react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { isAxiosError } from "axios";
 import { useEffect } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -34,7 +35,7 @@ function ArticleDetailPage() {
   });
 
   // Self-healing: If 404 occurs, check if this is actually a Call ID
-  const is404 = isError && (error as any)?.response?.status === 404;
+  const is404 = isError && isAxiosError(error) && error.response?.status === 404;
 
   const { data: potentialCall } = useQuery({
     queryKey: ["check-if-call", articleId],
