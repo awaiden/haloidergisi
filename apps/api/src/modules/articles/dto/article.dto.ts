@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
+import { ArticleStatus } from "@repo/db";
+import { IsIn, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
 
 export class CreateArticleDto {
   @IsString()
@@ -35,9 +36,8 @@ export class UpdateArticleDto {
 }
 
 export class UpdateArticleStatusDto {
-  @IsString()
-  @IsNotEmpty()
-  status: string;
+  @IsIn(Object.values(ArticleStatus))
+  status: ArticleStatus;
 
   @IsString()
   @IsOptional()

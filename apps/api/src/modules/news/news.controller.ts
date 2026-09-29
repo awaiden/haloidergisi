@@ -1,7 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
-import { Role } from "@repo/db";
+import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Role, type User } from "@repo/db";
 
-import { Auth, Roles, AllowAnonymous, OptionalAuth } from "../../decorators/auth.decorators";
+import { Auth, Roles, OptionalAuth } from "../../decorators/auth.decorators";
 import { CreateNewsDto, UpdateNewsDto } from "./dto/news.dto";
 import { NewsService } from "./news.service";
 
@@ -11,14 +11,14 @@ export class NewsController {
 
   @Get()
   @OptionalAuth()
-  findAll(@Auth() user?: any) {
+  findAll(@Auth() user?: User) {
     const isAdmin = user?.roles?.includes(Role.ADMIN);
     return this.newsService.findAll(isAdmin);
   }
 
   @Get(":idOrSlug")
   @OptionalAuth()
-  findOne(@Param("idOrSlug") idOrSlug: string, @Auth() user?: any) {
+  findOne(@Param("idOrSlug") idOrSlug: string, @Auth() user?: User) {
     const isAdmin = user?.roles?.includes(Role.ADMIN);
     return this.newsService.findOne(idOrSlug, isAdmin);
   }

@@ -70,7 +70,7 @@ export class AuthService {
       EMAIL_EVENTS.RESET_PASSWORD,
       new ResetPasswordEmailDto({
         to: email,
-        name: (user as any).profile?.name || "Kullanıcı",
+        name: user.profile?.name || "Kullanıcı",
         token,
       }),
     );
