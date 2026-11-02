@@ -38,52 +38,10 @@ function Web({ flip }: { flip?: boolean }) {
   );
 }
 
-function Ghost() {
-  return (
-    <svg
-      width='64'
-      height='84'
-      viewBox='0 0 64 84'
-    >
-      <path
-        d='M32 2C14 2 4 16 4 34v46l9-8 7 9 6-9 6 9 7-9 9 8V34C48 16 50 2 32 2z'
-        fill='#e5e7eb'
-        opacity='.85'
-      />
-      <ellipse
-        cx='21'
-        cy='32'
-        rx='6'
-        ry='10'
-        fill='#0b0618'
-      />
-      <ellipse
-        cx='43'
-        cy='32'
-        rx='6'
-        ry='10'
-        fill='#0b0618'
-      />
-      <ellipse
-        cx='32'
-        cy='56'
-        rx='8'
-        ry='13'
-        fill='#0b0618'
-      />
-    </svg>
-  );
-}
-
 const SPIDERS = [
   { left: "14%", len: 90, delay: 0 },
   { left: "47%", len: 140, delay: -2 },
   { left: "83%", len: 70, delay: -4 },
-];
-
-const GHOSTS = [
-  { top: "22%", dur: 34, delay: -5 },
-  { top: "55%", dur: 42, delay: -20 },
 ];
 
 export default function HalloweenDecor() {
@@ -110,25 +68,6 @@ export default function HalloweenDecor() {
           <span className='text-2xl'>🕷️</span>
         </div>
       ))}
-      {GHOSTS.map((g, i) => (
-        <div
-          key={i}
-          className='ghost'
-          style={
-            { top: g.top, "--dur": `${g.dur}s`, "--delay": `${g.delay}s` } as React.CSSProperties
-          }
-        >
-          <Ghost />
-        </div>
-      ))}
-      <div className='absolute bottom-2 left-3 flex items-end gap-1 text-4xl md:text-6xl'>
-        <span>🎃</span>
-        <span className='text-2xl md:text-4xl'>🪦</span>
-      </div>
-      <div className='absolute right-3 bottom-2 flex items-end gap-1 text-4xl md:text-6xl'>
-        <span className='text-2xl md:text-4xl'>💀</span>
-        <span>🎃</span>
-      </div>
       <div className='fog' />
       {BATS.map((b, i) => (
         <div

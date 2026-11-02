@@ -353,31 +353,6 @@
   }
 }
 
-.ghost {
-  position: absolute;
-  right: 0;
-  opacity: 0.55;
-  animation: ghost-float var(--dur, 36s) linear var(--delay, 0s) infinite;
-}
-
-@keyframes ghost-float {
-  0% {
-    transform: translate(10vw, 0);
-  }
-  25% {
-    transform: translate(-25vw, -4vh);
-  }
-  50% {
-    transform: translate(-55vw, 3vh);
-  }
-  75% {
-    transform: translate(-85vw, -5vh);
-  }
-  100% {
-    transform: translate(-115vw, 0);
-  }
-}
-
 .fog {
   position: absolute;
   inset: auto 0 0 0;
@@ -390,11 +365,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spider,
-  .ghost {
+  .spider {
     animation: none;
-  }
-  .ghost {
-    display: none;
   }
 }
