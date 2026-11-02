@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { socialLinks } from "@/constants";
 import apiClient from "@/lib/api-client";
+import { useThemeConfig } from "@/queries/use-theme-config";
 import { QueryRes } from "@/types";
 import { generateCanonicalUrl, generateMetaTags, generateStructuredData } from "@/utils/seo";
 
@@ -69,6 +70,10 @@ function RouteComponent() {
 }
 
 function HeroSection() {
+  const { data: theme } = useThemeConfig();
+  const heroSrc =
+    theme?.preset === "halloween" ? "/halloween-hero.svg" : "/undraw_book-lover_m9n3.svg";
+
   return (
     <section className='container py-20'>
       <div className='grid grid-cols-1 gap-16 md:grid-cols-2'>
@@ -127,7 +132,7 @@ function HeroSection() {
         <div className='hidden h-full items-center justify-center md:flex'>
           <img
             className='h-96 w-full object-contain'
-            src='/undraw_book-lover_m9n3.svg'
+            src={heroSrc}
             alt='Hero Banner'
           />
         </div>

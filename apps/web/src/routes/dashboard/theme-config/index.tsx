@@ -30,6 +30,7 @@ const PRESETS = [
   { id: "violet", name: "Menekşe Moru", primary: "#7c3aed", primaryDark: "#a78bfa" },
   { id: "crimson", name: "Koyu Kırmızı", primary: "#dc2626", primaryDark: "#f87171" },
   { id: "amber", name: "Kehribar", primary: "#d97706", primaryDark: "#fbbf24" },
+  { id: "halloween", name: "Cadılar Bayramı 🎃", primary: "#ea580c", primaryDark: "#fb923c" },
 ];
 
 const RADIUS_OPTIONS = [
@@ -103,8 +104,12 @@ function ThemeConfigDashboardPage() {
       root.style.removeProperty("--radius");
       root.style.removeProperty("--font-sans");
       document.body.style.fontFamily = "";
+      delete root.dataset.season;
       return;
     }
+
+    if (formState.preset === "halloween") root.dataset.season = "halloween";
+    else delete root.dataset.season;
 
     if (formState.primaryColor) {
       root.style.setProperty("--primary", formState.primaryColor);
