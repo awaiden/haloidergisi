@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Creepster&family=Roboto:wght@400;500;700&display=swap");
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -6,9 +7,9 @@
 @import "shadcn/tailwind.css";
 
 @import "@fontsource-variable/inter";
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Roboto:wght@400;500;700&display=swap");
 
 @custom-variant dark (.dark &);
+@custom-variant halloween (:is([data-season="halloween"] &));
 
 @layer base {
   html {
@@ -204,4 +205,196 @@
 
 .link {
   @apply text-muted-foreground hover:text-primary flex items-center gap-2;
+}
+
+/* Halloween season (preset "halloween", set via html[data-season]) */
+[data-season="halloween"] {
+  --background: oklch(0.97 0.02 70);
+  --card: oklch(0.99 0.015 70);
+  --accent: oklch(0.92 0.06 60);
+  --border: oklch(0.85 0.05 60);
+  --ring: oklch(0.65 0.19 50);
+  --input: oklch(0.7 0.08 60);
+  --muted-foreground: oklch(0.42 0.03 300);
+  --chart-1: oklch(0.7 0.19 50);
+  --chart-2: oklch(0.5 0.2 305);
+  --chart-3: oklch(0.6 0.15 140);
+  --chart-4: oklch(0.45 0.15 20);
+  --chart-5: oklch(0.3 0.08 300);
+}
+
+.dark[data-season="halloween"] {
+  --background: oklch(0.13 0.03 305);
+  --card: oklch(0.18 0.04 305);
+  --accent: oklch(0.25 0.07 305);
+  --border: oklch(0.7 0.19 50 / 25%);
+  --ring: oklch(0.7 0.19 50);
+  --input: oklch(0.7 0.19 50 / 40%);
+  --muted-foreground: oklch(0.78 0.03 300);
+}
+
+/* Opaque fields: the translucent defaults let the colored glow wash out text */
+[data-season="halloween"] input,
+[data-season="halloween"] textarea,
+[data-season="halloween"] [data-slot="select-trigger"] {
+  background-color: var(--card);
+}
+
+[data-season="halloween"] h1,
+[data-season="halloween"] h2 {
+  font-family: "Creepster", cursive;
+  letter-spacing: 0.03em;
+}
+
+.season-decor {
+  display: none;
+}
+
+[data-season="halloween"] .season-decor {
+  display: block;
+}
+
+.bat {
+  position: absolute;
+  left: 0;
+  color: oklch(0.2 0.03 305);
+  animation: bat-fly var(--dur, 18s) linear var(--delay, 0s) infinite;
+  will-change: transform;
+}
+
+.dark .bat {
+  color: oklch(0.7 0.19 50);
+}
+
+.bat svg {
+  animation: bat-flap 0.35s ease-in-out infinite alternate;
+}
+
+@keyframes bat-fly {
+  0% {
+    transform: translate(-15vw, 0) scale(0.9);
+  }
+  25% {
+    transform: translate(20vw, -6vh) scale(1.1);
+  }
+  50% {
+    transform: translate(55vw, 5vh) scale(0.95);
+  }
+  75% {
+    transform: translate(85vw, -5vh) scale(1.1);
+  }
+  100% {
+    transform: translate(115vw, 3vh) scale(0.9);
+  }
+}
+
+@keyframes bat-flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.45);
+  }
+}
+
+@keyframes logo-flicker {
+  0%,
+  90%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px oklch(0.7 0.19 50 / 60%));
+  }
+  92% {
+    opacity: 0.4;
+    filter: none;
+  }
+  94% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.55;
+    filter: none;
+  }
+}
+
+[data-season="halloween"] .logo {
+  animation: logo-flicker 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bat {
+    display: none;
+  }
+  [data-season="halloween"] .logo {
+    animation: none;
+  }
+}
+
+.spider {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(calc(var(--len) * -0.3));
+  animation: spider-drop 5s ease-in-out var(--delay, 0s) infinite alternate;
+}
+
+.spider-thread {
+  width: 1px;
+  height: var(--len);
+  background: currentColor;
+  opacity: 0.5;
+}
+
+@keyframes spider-drop {
+  to {
+    transform: translateY(calc(var(--len) * 0.1));
+  }
+}
+
+.ghost {
+  position: absolute;
+  right: 0;
+  opacity: 0.55;
+  animation: ghost-float var(--dur, 36s) linear var(--delay, 0s) infinite;
+}
+
+@keyframes ghost-float {
+  0% {
+    transform: translate(10vw, 0);
+  }
+  25% {
+    transform: translate(-25vw, -4vh);
+  }
+  50% {
+    transform: translate(-55vw, 3vh);
+  }
+  75% {
+    transform: translate(-85vw, -5vh);
+  }
+  100% {
+    transform: translate(-115vw, 0);
+  }
+}
+
+.fog {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 12rem;
+  background: linear-gradient(to top, oklch(0.7 0.1 305 / 35%), transparent);
+}
+
+[data-season="halloween"] h1 {
+  text-shadow: 0 0 18px oklch(0.7 0.19 50 / 45%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spider,
+  .ghost {
+    animation: none;
+  }
+  .ghost {
+    display: none;
+  }
 }

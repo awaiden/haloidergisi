@@ -16,8 +16,12 @@ export function ThemeConfigProvider({ children }: { children: React.ReactNode })
       root.style.removeProperty("--radius");
       root.style.removeProperty("--font-sans");
       document.body.style.fontFamily = "";
+      delete root.dataset.season;
       return;
     }
+
+    if (config.preset === "halloween") root.dataset.season = "halloween";
+    else delete root.dataset.season;
 
     if (config.primaryColor) {
       root.style.setProperty("--primary", config.primaryColor);

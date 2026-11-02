@@ -25,6 +25,7 @@ export default function Logo({ src, alt, ...props }: LogoProps) {
       src={src}
       alt={alt}
       {...props}
+      className={`logo ${props.className ?? ""}`}
     />
   );
 }
