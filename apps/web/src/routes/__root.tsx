@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 
 import LoadingIndicator from "@/components/loading-indicator";
 import AnalyticsTracker from "@/components/tracker";
+import { SITE_URL } from "@/lib/env";
 import AppProviders from "@/providers";
 
 import appCss from "../styles.css?url";
@@ -59,7 +60,7 @@ export const Route = createRootRoute({
       },
       {
         property: "og:image",
-        content: "/logo.png",
+        content: `${SITE_URL}/logo.png`,
       },
       {
         property: "og:locale",
@@ -80,7 +81,7 @@ export const Route = createRootRoute({
       },
       {
         name: "twitter:image",
-        content: "/logo.png",
+        content: `${SITE_URL}/logo.png`,
       },
       {
         name: "theme-color",

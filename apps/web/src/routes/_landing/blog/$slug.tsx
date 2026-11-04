@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import apiClient from "@/lib/api-client";
+import { SITE_URL } from "@/lib/env";
 import { News } from "@/types";
 import { generateCanonicalUrl, generateMetaTags, generateStructuredData } from "@/utils/seo";
 
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/_landing/blog/$slug")({
       author: news.author?.profile?.name || "HALO Editör",
       authorType: "Person",
       url: canonicalUrl,
-      publisherLogo: `${typeof window !== "undefined" ? window.location.origin : ""}/logo.png`,
+      publisherLogo: `${SITE_URL}/logo.png`,
     });
 
     return {

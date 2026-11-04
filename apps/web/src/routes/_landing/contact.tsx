@@ -21,8 +21,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { socialLinks } from "@/constants";
 import apiClient from "@/lib/api-client";
 import { messageSchema, MessageSchema } from "@/schemas/message";
+import { pageHead } from "@/utils/seo";
 
 export const Route = createFileRoute("/_landing/contact")({
+  head: () =>
+    pageHead(
+      "/contact",
+      "İletişim",
+      "HALO Dergisi ile iletişime geçin: soru, öneri ve iş birliği için bize yazın.",
+    ),
   component: RouteComponent,
 });
 

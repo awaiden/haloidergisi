@@ -38,3 +38,8 @@ export const TURNSTILE_SITE_KEY = resolveTurnstileSiteKey(
   import.meta.env.VITE_TURNSTILE_SITE_KEY,
   import.meta.env.PROD,
 );
+
+/** Canonical origin for absolute URLs (canonical, og:image, JSON-LD); `window` is unavailable during SSR. */
+export const SITE_URL = (
+  import.meta.env.VITE_SITE_URL?.trim() || "https://haloidergisi.com"
+).replace(/\/+$/, "");

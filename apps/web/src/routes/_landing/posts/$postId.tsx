@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import apiClient from "@/lib/api-client";
+import { SITE_URL } from "@/lib/env";
 import { feedbackSchema, FeedbackSchema } from "@/schemas/message";
 import { Post } from "@/types";
 import { QueryRes } from "@/types";
@@ -75,7 +76,7 @@ export const Route = createFileRoute("/_landing/posts/$postId")({
       author: "HALO Dergisi Editörleri",
       authorType: "Organization",
       url: canonicalUrl,
-      publisherLogo: `${typeof window !== "undefined" ? window.location.origin : ""}/logo.png`,
+      publisherLogo: `${SITE_URL}/logo.png`,
     });
 
     return {

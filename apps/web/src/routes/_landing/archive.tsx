@@ -7,6 +7,7 @@ import { useState } from "react";
 import CdnImage from "@/components/cdn-image";
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
+import { pageHead } from "@/utils/seo";
 
 type ArchiveGenre = {
   category: string;
@@ -23,6 +24,7 @@ type ArchiveMagazine = {
 };
 
 export const Route = createFileRoute("/_landing/archive")({
+  head: () => pageHead("/archive", "Dergi Arşivi", "HALO Dergisi'nin yayımlanmış tüm sayıları."),
   component: RouteComponent,
 });
 

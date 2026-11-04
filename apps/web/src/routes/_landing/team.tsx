@@ -12,8 +12,11 @@ import {
 import apiClient from "@/lib/api-client";
 import { Crew, List, User } from "@/types";
 import { getCdnUrl } from "@/utils/cdn";
+import { pageHead } from "@/utils/seo";
 
 export const Route = createFileRoute("/_landing/team")({
+  head: () =>
+    pageHead("/team", "Ekibimiz", "HALO Dergisi'ni hazırlayan editörler ve ekip üyeleri."),
   component: RouteComponent,
   loader: async () => {
     const { data: crews } = await apiClient.get<List<Crew>>("/crews");

@@ -17,6 +17,7 @@ import {
 import useDebounce from "@/hooks/use-debounce";
 import apiClient from "@/lib/api-client";
 import { Post, QueryRes } from "@/types";
+import { pageHead } from "@/utils/seo";
 
 const searchSchema = z.object({
   page: z.number().optional(),
@@ -29,6 +30,8 @@ const searchSchema = z.object({
 type Search = z.infer<typeof searchSchema>;
 
 export const Route = createFileRoute("/_landing/posts/")({
+  head: () =>
+    pageHead("/posts", "Dergiler", "HALO Dergisi'nin tüm sayıları: dergileri çevrimiçi okuyun."),
   component: RouteComponent,
   validateSearch: (search): Search => searchSchema.parse(search),
   loaderDeps: ({ search: { page, limit, search, categoryId, sort } }: { search: Search }) => ({

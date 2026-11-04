@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as LandingRouteRouteImport } from './routes/_landing/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
@@ -69,6 +70,11 @@ import { Route as LandingAccountDeleteRouteImport } from './routes/_landing/acco
 import { Route as LandingAccountApplicationsRouteImport } from './routes/_landing/account/applications'
 import { Route as LandingArticlesSubmitCallIdRouteImport } from './routes/_landing/articles/submit.$callId'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -377,6 +383,7 @@ const LandingArticlesSubmitCallIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof LandingIndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/account': typeof LandingAccountRouteRouteWithChildren
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/google-callback': typeof AuthGoogleCallbackRoute
@@ -435,6 +442,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof LandingIndexRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/forgot-password': typeof AuthForgotPasswordRoute
   '/google-callback': typeof AuthGoogleCallbackRoute
   '/login': typeof AuthLoginRoute
@@ -495,6 +503,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_landing': typeof LandingRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_landing/account': typeof LandingAccountRouteRouteWithChildren
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
   '/_auth/google-callback': typeof AuthGoogleCallbackRoute
@@ -557,6 +566,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/sitemap.xml'
     | '/account'
     | '/forgot-password'
     | '/google-callback'
@@ -615,6 +625,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/sitemap.xml'
     | '/forgot-password'
     | '/google-callback'
     | '/login'
@@ -674,6 +685,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_landing'
     | '/dashboard'
+    | '/sitemap.xml'
     | '/_landing/account'
     | '/_auth/forgot-password'
     | '/_auth/google-callback'
@@ -736,10 +748,18 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   LandingRouteRoute: typeof LandingRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -1311,6 +1331,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   LandingRouteRoute: LandingRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

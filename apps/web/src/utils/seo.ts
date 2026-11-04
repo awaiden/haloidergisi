@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/lib/env";
+
 export interface SEOConfig {
   title?: string;
   description?: string;
@@ -56,12 +58,12 @@ export function generateMetaTags(config: SEOConfig) {
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
 
   // The charset tag is set once in __root.tsx (as React's `charSet`).
-  const meta: Array<{ name?: string; property?: string; content?: string }> = [
+  const meta: Array<{ title?: string; name?: string; property?: string; content?: string }> = [
     { name: "viewport", content: "width=device-width, initial-scale=1" },
   ];
 
   if (title) {
-    meta.push({ name: "title", content: fullTitle });
+    meta.push({ title: fullTitle });
     meta.push({ property: "og:title", content: title });
     meta.push({ name: "twitter:title", content: title });
   }
@@ -134,7 +136,7 @@ export function generateMetaTags(config: SEOConfig) {
 }
 
 export function generateCanonicalUrl(path: string, baseUrl?: string): string {
-  const base = baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
+  const base = baseUrl || SITE_URL;
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return `${base}${cleanPath}`;
 }
@@ -173,7 +175,7 @@ export function generateStructuredData(
           "@type": "SearchAction",
           target: {
             "@type": "EntryPoint",
-            urlTemplate: `${data.url}/posts?q={search_term_string}`,
+            urlTemplate: `${SITE_URL}/posts?q={search_term_string}`,
           },
           "query-input": "required name=search_term_string",
         },
@@ -220,4 +222,13 @@ export function generateStructuredData(
     default:
       return null;
   }
+}
+
+/** `head()` result for a plain page: unique title/description plus an absolute canonical. */
+export function pageHead(path: string, title: string, description: string) {
+  const canonical = generateCanonicalUrl(path);
+  return {
+    meta: generateMetaTags({ title, description, canonical, image: `${SITE_URL}/logo.png` }),
+    links: [{ rel: "canonical", href: canonical }],
+  };
 }

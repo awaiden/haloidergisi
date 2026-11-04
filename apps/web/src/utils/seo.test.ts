@@ -8,7 +8,7 @@ const find = (meta: ReturnType<typeof generateMetaTags>, key: string) =>
 describe("generateMetaTags", () => {
   it("suffixes the page title with the site name", () => {
     const meta = generateMetaTags({ title: "Sayı 5", description: "Yeni sayı" });
-    expect(find(meta, "title")).toBe("Sayı 5 | HALO Dergisi");
+    expect(meta.find((m) => m.title)?.title).toBe("Sayı 5 | HALO Dergisi");
     expect(find(meta, "og:title")).toBe("Sayı 5");
     expect(find(meta, "description")).toBe("Yeni sayı");
     expect(find(meta, "og:locale")).toBe("tr_TR");

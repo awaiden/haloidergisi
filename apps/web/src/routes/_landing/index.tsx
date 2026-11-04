@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { socialLinks } from "@/constants";
 import apiClient from "@/lib/api-client";
+import { SITE_URL } from "@/lib/env";
 import { useThemeConfig } from "@/queries/use-theme-config";
 import { QueryRes } from "@/types";
 import { generateCanonicalUrl, generateMetaTags, generateStructuredData } from "@/utils/seo";
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/_landing/")({
       ],
       canonical: canonicalUrl,
       type: "website",
-      image: `${typeof window !== "undefined" ? window.location.origin : ""}/logo.png`,
+      image: `${SITE_URL}/logo.png`,
       imageAlt: "HALO Dergisi Logo",
     });
 
