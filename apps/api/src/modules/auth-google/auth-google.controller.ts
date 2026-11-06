@@ -17,16 +17,11 @@ import {
 export class AuthGoogleController {
   constructor(private readonly authGoogleService: AuthGoogleService) {}
 
-  /** Browser entry point: `?platform=web|mobile[&challenge=…][&ticket=…]`. */
+  /** Browser entry point: `?[ticket=…]`. */
   @Get()
   @AllowAnonymous()
-  start(
-    @Query("platform") platform: string | undefined,
-    @Query("challenge") challenge: string | undefined,
-    @Query("ticket") ticket: string | undefined,
-    @Res() res: Response,
-  ) {
-    const { url, flowCookie } = this.authGoogleService.start({ platform, challenge, ticket });
+  start(@Query("ticket") ticket: string | undefined, @Res() res: Response) {
+    const { url, flowCookie } = this.authGoogleService.start({ ticket });
     res.cookie(GOOGLE_FLOW_COOKIE, flowCookie, {
       httpOnly: true,
       // Lax: the cookie must survive Google's top-level redirect back to us.
@@ -62,20 +57,16 @@ export class AuthGoogleController {
   @Post("exchange")
   @Throttle(AUTH_THROTTLE)
   @AllowAnonymous()
-  exchange(@Body("code") code: string, @Body("verifier") verifier?: string) {
-    return this.authGoogleService.exchange(code, verifier);
+  exchange(@Body("code") code: string) {
+    return this.authGoogleService.exchange(code);
   }
 
   /** Signed-in users: returns a URL that links Google to their account. */
   @Post("link")
   @UseGuards(AuthGuard)
   @Roles("USER")
-  link(
-    @Auth("id") userId: string,
-    @Body("platform") platform?: string,
-    @Body("challenge") challenge?: string,
-  ) {
-    return this.authGoogleService.createLinkUrl(userId, platform, challenge);
+  link(@Auth("id") userId: string) {
+    return this.authGoogleService.createLinkUrl(userId);
   }
 }
 

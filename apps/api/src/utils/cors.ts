@@ -6,7 +6,7 @@ import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-option
  * `CORS_ORIGINS` (comma-separated) wins when set; otherwise the web app's
  * `WEB_URL` / `APP_URL` / `FRONTEND_URL` are used, each with its `www.`
  * counterpart. Outside production the Vite dev server is always allowed.
- * Requests without an `Origin` header (mobile app, server-side rendering,
+ * Requests without an `Origin` header (server-side rendering,
  * curl) are not affected by CORS.
  */
 export function resolveCorsOrigins(env: NodeJS.ProcessEnv = process.env): string[] {

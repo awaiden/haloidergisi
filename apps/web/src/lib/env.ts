@@ -5,7 +5,7 @@
  */
 export const PRODUCTION_API_URL = "https://api.haloidergisi.com";
 export const DEV_API_URL = "http://localhost:3000";
-/** Public site key (it ships in every bundle); the mobile app defaults to it too. */
+/** Public site key (it ships in every bundle). */
 export const PRODUCTION_TURNSTILE_SITE_KEY = "0x4AAAAAACN8voBpRMLOZ9Nu";
 
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]", "10.0.2.2"]);
