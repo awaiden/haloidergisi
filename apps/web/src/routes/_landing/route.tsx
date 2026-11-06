@@ -1,7 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 import HalloweenDecor from "@/components/halloween-decor";
-import BottomTabs from "@/components/landing/bottom-tabs";
 import LandingFooter from "@/components/landing/footer";
 import LandingNavbar from "@/components/landing/navbar";
 
@@ -14,11 +13,10 @@ function RouteComponent() {
     <>
       <div className='flex min-h-screen flex-col'>
         <LandingNavbar />
-        <main className='flex-1 pb-16 md:pb-0'>
+        <main className='flex-1'>
           <Outlet />
         </main>
         <LandingFooter />
-        <BottomTabs />
       </div>
 
       <HalloweenDecor />

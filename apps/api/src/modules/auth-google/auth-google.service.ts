@@ -11,16 +11,29 @@ import { DrizzleService } from "@/database";
 import { TokensService } from "../tokens/tokens.service";
 import { UsersService } from "../users/users.service";
 
+export type GooglePlatform = "web" | "mobile";
+
 /** httpOnly cookie that carries the signed flow state between start and callback. */
 export const GOOGLE_FLOW_COOKIE = "google_oauth";
 export const GOOGLE_FLOW_TTL_SECONDS = 10 * 60;
+
+/** Deep link the mobile app listens on (`flutter_web_auth_2`). */
+export const MOBILE_CALLBACK_URL = "halo://auth-callback";
 
 interface FlowState {
   type: "google_flow";
   state: string;
   verifier: string;
+  platform: GooglePlatform;
+  /** Mobile only: S256 challenge of the app's own verifier (see `exchange`). */
+  challenge?: string;
   /** Set when an existing user links Google instead of signing in. */
   linkUserId?: string;
+}
+
+/** RFC 7636 S256: base64url(sha256(verifier)). */
+export function s256Challenge(verifier: string) {
+  return crypto.createHash("sha256").update(verifier).digest("base64url");
 }
 
 interface GoogleClaims {
@@ -32,7 +45,7 @@ interface GoogleClaims {
 
 /**
  * Google sign-in with arctic (authorization code + PKCE), as a server-side
- * redirect flow:
+ * redirect flow shared by web and mobile:
  *
  * 1. `start`: the browser hits `GET /auth/google`; we keep `state` and the PKCE
  *    verifier in a signed, httpOnly cookie and redirect to Google.
@@ -40,7 +53,9 @@ interface GoogleClaims {
  *    `state` against the cookie (login-CSRF protection), exchange the code and
  *    find or create the user, then send the browser back to the client with a
  *    short-lived one-time *handoff code* (never the session token itself).
- * 3. `exchange`: the client trades the handoff code for a session token.
+ * 3. `exchange`: the client trades the handoff code for a session token. The
+ *    mobile app must also present the verifier behind the challenge it sent in
+ *    step 1, so an app that intercepts the `halo://` deep link can't use it.
  */
 @Injectable()
 export class AuthGoogleService {
@@ -70,7 +85,12 @@ export class AuthGoogleService {
   }
 
   /** Step 1: returns the Google URL and the signed flow cookie value. */
-  start(params: { ticket?: string }) {
+  start(params: { platform?: string; challenge?: string; ticket?: string }) {
+    const platform: GooglePlatform = params.platform === "mobile" ? "mobile" : "web";
+    if (platform === "mobile" && !/^[A-Za-z0-9_-]{43}$/.test(params.challenge ?? "")) {
+      throw new BadRequestException("Missing or invalid PKCE challenge.");
+    }
+
     let linkUserId: string | undefined;
     if (params.ticket) {
       linkUserId = this.verify<{ sub: string }>(params.ticket, "google_link").sub;
@@ -85,6 +105,8 @@ export class AuthGoogleService {
       type: "google_flow",
       state,
       verifier,
+      platform,
+      challenge: platform === "mobile" ? params.challenge : undefined,
       linkUserId,
     };
     const flowCookie = this.jwtService.sign(flow, { expiresIn: GOOGLE_FLOW_TTL_SECONDS });
@@ -110,35 +132,42 @@ export class AuthGoogleService {
 
       if (flow.linkUserId) {
         await this.link(flow.linkUserId, claims);
-        return this.clientUrl({ linked: "1" });
+        return this.clientUrl(flow.platform, { linked: "1" });
       }
 
       const userId = await this.findOrCreateUser(claims);
       const handoff = this.jwtService.sign(
-        { sub: userId, type: "google_handoff" },
+        { sub: userId, type: "google_handoff", challenge: flow.challenge },
         { expiresIn: "2m" },
       );
-      return this.clientUrl({ code: handoff });
+      return this.clientUrl(flow.platform, { code: handoff });
     } catch (error) {
       const message =
         error instanceof BadRequestException ? error.message : "Google ile giriş başarısız oldu.";
       if (!(error instanceof BadRequestException)) this.logger.error(error);
-      return this.clientUrl({ error: message });
+      return this.clientUrl(flow?.platform ?? "web", { error: message });
     }
   }
 
   /** Step 3: trades a handoff code for a session token. */
-  async exchange(code: string) {
-    const handoff = this.verify<{ sub: string }>(code, "google_handoff");
+  async exchange(code: string, verifier?: string) {
+    const handoff = this.verify<{ sub: string; challenge?: string }>(code, "google_handoff");
+    if (handoff.challenge) {
+      if (!verifier || s256Challenge(verifier) !== handoff.challenge) {
+        throw new BadRequestException("Geçersiz doğrulama kodu.");
+      }
+    }
     const { token } = await this.tokensService.generateToken(handoff.sub);
     return { token };
   }
 
   /** For signed-in users: a URL that starts a flow linking Google to them. */
-  createLinkUrl(userId: string) {
+  createLinkUrl(userId: string, platform?: string, challenge?: string) {
     const ticket = this.jwtService.sign({ sub: userId, type: "google_link" }, { expiresIn: "2m" });
     const url = new URL("/auth/google", this.apiOrigin);
     url.searchParams.set("ticket", ticket);
+    url.searchParams.set("platform", platform === "mobile" ? "mobile" : "web");
+    if (challenge) url.searchParams.set("challenge", challenge);
     return { url: url.toString() };
   }
 
@@ -226,10 +255,12 @@ export class AuthGoogleService {
     });
   }
 
-  private clientUrl(params: Record<string, string>) {
+  private clientUrl(platform: GooglePlatform, params: Record<string, string>) {
     const query = new URLSearchParams(params).toString();
-    // Fragment, so the code never reaches server logs or Referer headers.
-    return `${this.webOrigin}/google-callback#${query}`;
+    // Web: fragment, so the code never reaches server logs or Referer headers.
+    return platform === "mobile"
+      ? `${MOBILE_CALLBACK_URL}?${query}`
+      : `${this.webOrigin}/google-callback#${query}`;
   }
 
   private verify<T extends object>(token: string | undefined, type: string): T {

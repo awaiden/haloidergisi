@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 
-import { AuthGoogleService } from "./auth-google.service";
+import { AuthGoogleService, s256Challenge } from "./auth-google.service";
 
 // arctic is ESM-only; Jest runs CommonJS, so stand in for the bits we use.
 const validateAuthorizationCode = jest.fn();
@@ -16,6 +16,8 @@ jest.mock("arctic", () => ({
   generateCodeVerifier: () => "google-verifier",
   decodeIdToken: (token: string) => decodeIdToken(token),
 }));
+
+const APP_VERIFIER = "app-verifier-0123456789-abcdefghijklmnopqrstuvwxyz";
 
 describe("AuthGoogleService", () => {
   const providersFindFirst = jest.fn();
@@ -59,20 +61,36 @@ describe("AuthGoogleService", () => {
     );
   });
 
+  const challenge = s256Challenge(APP_VERIFIER);
+
+  function startMobile() {
+    return service.start({ platform: "mobile", challenge });
+  }
+
+  async function handoffFrom(target: string) {
+    const url = new URL(target.replace("halo://", "halo://x/"));
+    return url.searchParams;
+  }
+
+  it("mobile flows require a PKCE challenge", () => {
+    expect(() => service.start({ platform: "mobile" })).toThrow(BadRequestException);
+    expect(startMobile().url).toContain("state=state-123");
+  });
+
   it("rejects a callback whose state does not match the cookie", async () => {
-    const { flowCookie } = service.start({});
+    const { flowCookie } = startMobile();
 
     const target = await service.finish({ code: "c", state: "forged", flowCookie });
 
-    expect(target.startsWith("http://localhost:5173/google-callback#error=")).toBe(true);
+    expect(target.startsWith("halo://auth-callback?error=")).toBe(true);
     expect(validateAuthorizationCode).not.toHaveBeenCalled();
   });
 
-  it("signs up a new Google user and hands the web app a redeemable code", async () => {
+  it("signs up a new Google user and hands the app a code only its verifier can redeem", async () => {
     providersFindFirst.mockResolvedValue(undefined);
     usersFindFirst.mockResolvedValue(undefined);
     create.mockResolvedValue({ id: "u1" });
-    const { flowCookie } = service.start({});
+    const { flowCookie } = startMobile();
 
     const target = await service.finish({ code: "google-code", state: "state-123", flowCookie });
 
@@ -80,17 +98,21 @@ describe("AuthGoogleService", () => {
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({ email: "ayse@example.com", name: "Ayşe" }),
     );
-    const code = new URLSearchParams(target.split("#")[1]).get("code")!;
+    const code = (await handoffFrom(target)).get("code")!;
 
-    await expect(service.exchange(code)).resolves.toEqual({
+    await expect(service.exchange(code, "someone-elses-verifier")).rejects.toThrow(
+      BadRequestException,
+    );
+    await expect(service.exchange(code)).rejects.toThrow(BadRequestException);
+    await expect(service.exchange(code, APP_VERIFIER)).resolves.toEqual({
       token: "session-token",
     });
     expect(generateToken).toHaveBeenCalledWith("u1");
   });
 
-  it("signs in an already linked user via the URL fragment", async () => {
+  it("signs in an already linked user on the web via the URL fragment", async () => {
     providersFindFirst.mockResolvedValue({ userId: "u9" });
-    const { flowCookie } = service.start({});
+    const { flowCookie } = service.start({ platform: "web" });
 
     const target = await service.finish({ code: "c", state: "state-123", flowCookie });
 
@@ -103,7 +125,7 @@ describe("AuthGoogleService", () => {
   it("signs an existing verified account in with Google and links it", async () => {
     providersFindFirst.mockResolvedValue(undefined);
     usersFindFirst.mockResolvedValue({ id: "existing", emailVerifiedAt: new Date() });
-    const { flowCookie } = service.start({});
+    const { flowCookie } = service.start({ platform: "web" });
 
     const target = await service.finish({ code: "c", state: "state-123", flowCookie });
 
@@ -121,7 +143,7 @@ describe("AuthGoogleService", () => {
   it("locks out whoever set the password on an unverified account before linking", async () => {
     providersFindFirst.mockResolvedValue(undefined);
     usersFindFirst.mockResolvedValue({ id: "squatted", emailVerifiedAt: null });
-    const { flowCookie } = service.start({});
+    const { flowCookie } = service.start({ platform: "web" });
 
     const target = await service.finish({ code: "c", state: "state-123", flowCookie });
 
@@ -135,7 +157,7 @@ describe("AuthGoogleService", () => {
 
   it("refuses unverified Google emails", async () => {
     decodeIdToken.mockReturnValue({ sub: "g", email: "x@example.com", email_verified: false });
-    const { flowCookie } = service.start({});
+    const { flowCookie } = service.start({ platform: "web" });
 
     const target = await service.finish({ code: "c", state: "state-123", flowCookie });
 
@@ -146,7 +168,7 @@ describe("AuthGoogleService", () => {
   it("links Google to the signed-in user from a link ticket", async () => {
     providersFindFirst.mockResolvedValue(undefined);
     const ticket = new URL(service.createLinkUrl("u5").url).searchParams.get("ticket")!;
-    const { flowCookie } = service.start({ ticket });
+    const { flowCookie } = service.start({ platform: "web", ticket });
 
     const target = await service.finish({ code: "c", state: "state-123", flowCookie });
 

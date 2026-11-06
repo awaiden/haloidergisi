@@ -2,7 +2,6 @@ import "@fontsource/poppins";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { useEffect } from "react";
 import { Toaster } from "sonner";
 
 import LoadingIndicator from "@/components/loading-indicator";
@@ -24,7 +23,7 @@ export const Route = createRootRoute({
       },
       {
         name: "viewport",
-        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+        content: "width=device-width, initial-scale=1",
       },
       {
         title: "HALO Dergisi - Aylık Fikir, Sanat ve Edebiyat Dergisi",
@@ -107,11 +106,11 @@ export const Route = createRootRoute({
       },
       {
         rel: "apple-touch-icon",
-        href: "/apple-touch-icon.png",
+        href: "/logo.png",
       },
       {
         rel: "manifest",
-        href: "/manifest.webmanifest",
+        href: "/manifest.json",
       },
     ],
   }),
@@ -120,11 +119,6 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    if (import.meta.env.PROD)
-      import("virtual:pwa-register").then((m) => m.registerSW({ immediate: true }));
-  }, []);
-
   return (
     <html
       lang='tr'

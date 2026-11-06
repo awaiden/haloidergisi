@@ -1,0 +1,20 @@
+{
+  "short_name": "HALO",
+  "name": "HALO Dergisi - Aylık Fikir, Sanat ve Edebiyat Dergisi",
+  "description": "HALO Dergisi, öğrenciler tarafından hazırlanan aylık fikir, sanat ve edebiyat dergisidir.",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["education", "lifestyle", "magazines"],
+  "lang": "tr"
+}

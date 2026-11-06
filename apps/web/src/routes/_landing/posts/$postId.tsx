@@ -139,11 +139,12 @@ function RouteComponent() {
                   className='w-full'
                 >
                   <Link
-                    to='/posts/$postId/read'
-                    params={{ postId: post.slug }}
+                    to={getCdnUrl(post.attachment!)}
+                    target='_blank'
+                    rel='noopener noreferrer'
                   >
-                    <Icon icon='mdi:book-open-page-variant' />
-                    Dergiyi Oku
+                    <Icon icon='mdi:download' />
+                    Dergiyi İndir
                   </Link>
                 </Button>
               </div>
@@ -191,11 +192,12 @@ function RouteComponent() {
                   className='w-full'
                 >
                   <Link
-                    to='/posts/$postId/read'
-                    params={{ postId: post.slug }}
+                    to={getCdnUrl(post.attachment!)}
+                    target='_blank'
+                    rel='noopener noreferrer'
                   >
-                    <Icon icon='mdi:book-open-page-variant' />
-                    Dergiyi Oku
+                    <Icon icon='mdi:download' />
+                    Dergiyi İndir
                   </Link>
                 </Button>
               </li>

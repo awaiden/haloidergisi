@@ -44,7 +44,6 @@ import { Route as LandingPostsIndexRouteImport } from './routes/_landing/posts/i
 import { Route as LandingBlogIndexRouteImport } from './routes/_landing/blog/index'
 import { Route as LandingArticlesIndexRouteImport } from './routes/_landing/articles/index'
 import { Route as LandingAccountIndexRouteImport } from './routes/_landing/account/index'
-import { Route as PostsPostIdReadRouteImport } from './routes/posts.$postId.read'
 import { Route as DashboardUsersNewRouteImport } from './routes/dashboard/users/new'
 import { Route as DashboardUsersUserIdRouteImport } from './routes/dashboard/users/$userId'
 import { Route as DashboardSubmissionsArticleIdRouteImport } from './routes/dashboard/submissions/$articleId'
@@ -247,11 +246,6 @@ const LandingAccountIndexRoute = LandingAccountIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LandingAccountRouteRoute,
 } as any)
-const PostsPostIdReadRoute = PostsPostIdReadRouteImport.update({
-  id: '/posts/$postId/read',
-  path: '/posts/$postId/read',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DashboardUsersNewRoute = DashboardUsersNewRouteImport.update({
   id: '/users/new',
   path: '/users/new',
@@ -428,7 +422,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/submissions/$articleId': typeof DashboardSubmissionsArticleIdRoute
   '/dashboard/users/$userId': typeof DashboardUsersUserIdRoute
   '/dashboard/users/new': typeof DashboardUsersNewRoute
-  '/posts/$postId/read': typeof PostsPostIdReadRoute
   '/account/': typeof LandingAccountIndexRoute
   '/articles/': typeof LandingArticlesIndexRoute
   '/blog/': typeof LandingBlogIndexRoute
@@ -487,7 +480,6 @@ export interface FileRoutesByTo {
   '/dashboard/submissions/$articleId': typeof DashboardSubmissionsArticleIdRoute
   '/dashboard/users/$userId': typeof DashboardUsersUserIdRoute
   '/dashboard/users/new': typeof DashboardUsersNewRoute
-  '/posts/$postId/read': typeof PostsPostIdReadRoute
   '/account': typeof LandingAccountIndexRoute
   '/articles': typeof LandingArticlesIndexRoute
   '/blog': typeof LandingBlogIndexRoute
@@ -551,7 +543,6 @@ export interface FileRoutesById {
   '/dashboard/submissions/$articleId': typeof DashboardSubmissionsArticleIdRoute
   '/dashboard/users/$userId': typeof DashboardUsersUserIdRoute
   '/dashboard/users/new': typeof DashboardUsersNewRoute
-  '/posts/$postId/read': typeof PostsPostIdReadRoute
   '/_landing/account/': typeof LandingAccountIndexRoute
   '/_landing/articles/': typeof LandingArticlesIndexRoute
   '/_landing/blog/': typeof LandingBlogIndexRoute
@@ -614,7 +605,6 @@ export interface FileRouteTypes {
     | '/dashboard/submissions/$articleId'
     | '/dashboard/users/$userId'
     | '/dashboard/users/new'
-    | '/posts/$postId/read'
     | '/account/'
     | '/articles/'
     | '/blog/'
@@ -673,7 +663,6 @@ export interface FileRouteTypes {
     | '/dashboard/submissions/$articleId'
     | '/dashboard/users/$userId'
     | '/dashboard/users/new'
-    | '/posts/$postId/read'
     | '/account'
     | '/articles'
     | '/blog'
@@ -736,7 +725,6 @@ export interface FileRouteTypes {
     | '/dashboard/submissions/$articleId'
     | '/dashboard/users/$userId'
     | '/dashboard/users/new'
-    | '/posts/$postId/read'
     | '/_landing/account/'
     | '/_landing/articles/'
     | '/_landing/blog/'
@@ -761,7 +749,6 @@ export interface RootRouteChildren {
   LandingRouteRoute: typeof LandingRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  PostsPostIdReadRoute: typeof PostsPostIdReadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1010,13 +997,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/'
       preLoaderRoute: typeof LandingAccountIndexRouteImport
       parentRoute: typeof LandingAccountRouteRoute
-    }
-    '/posts/$postId/read': {
-      id: '/posts/$postId/read'
-      path: '/posts/$postId/read'
-      fullPath: '/posts/$postId/read'
-      preLoaderRoute: typeof PostsPostIdReadRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/dashboard/users/new': {
       id: '/dashboard/users/new'
@@ -1352,7 +1332,6 @@ const rootRouteChildren: RootRouteChildren = {
   LandingRouteRoute: LandingRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  PostsPostIdReadRoute: PostsPostIdReadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

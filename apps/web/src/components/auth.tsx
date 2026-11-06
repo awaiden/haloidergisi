@@ -16,11 +16,13 @@ interface GoogleAuthButtonProps extends React.ComponentProps<typeof Button> {
 export const GoogleAuthButton = ({ action = "login", ...props }: GoogleAuthButtonProps) => {
   const start = async () => {
     if (action === "login") {
-      window.location.assign(`${API_URL}/auth/google`);
+      window.location.assign(`${API_URL}/auth/google?platform=web`);
       return;
     }
     try {
-      const { data } = await apiClient.post<{ url: string }>("/auth/google/link");
+      const { data } = await apiClient.post<{ url: string }>("/auth/google/link", {
+        platform: "web",
+      });
       window.location.assign(data.url);
     } catch (error) {
       toast.error(apiClient.resolveApiError(error).message);
